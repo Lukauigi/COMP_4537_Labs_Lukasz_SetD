@@ -1,5 +1,12 @@
 const express = require('express')
 const app = express()
+const https = require('https');
+const bodyparser = require("body-parser");
+
+app.use(bodyparser.urlencoded({
+  extended: true
+}));
+app.use(express.static('./public'));
 
 
 app.listen(8000, function(err) {
@@ -7,30 +14,40 @@ app.listen(8000, function(err) {
 })
 
 
-// app.get('/', function(req, res) {
-//     res.send('GET request to homepage')
-// })
-
-
 app.get('/contact', function(req, res) {
     res.send('Hi, where is my email!?')
 })
 
+// app.get("/", function(req, res) {
+//   var cityName = 'Vancouver';
+//   var apikey = "8fbb8ddb351860ae5fac593696e9a2c9"
+//   const url = "https://api.openweathermap.org/data/2.5/weather?q=" + cityName + "&units=metric&appid=" + apikey
 
-app.use(express.static('./public'));
+//   https.get(url, function(https_res) {
+//       https_res.on("data", function(data) {  
+//       res.write("<h1> " + cityName + " weather is " + JSON.parse(data).weather[0].description) + "</h1>";
+//       res.write("<h1> " + cityName + " temp is " + JSON.parse(data).main.temp) + "</h1>";
 
+//       // console.log(JSON.parse(data).weather[0].icon );
+//       res.write('  <img src="' + "http://openweathermap.org/img/wn/" + JSON.parse(data).weather[0].icon + '.png"' + "/>");
+//       res.send();
+//     })
+//   });
+// })
 
-const https = require('https');
+app.get('/', function(req, res) {
+  res.sendFile(__dirname + "/index.html");
+})
 
-app.get("/", function(req, res) {
-  var cityName = 'Vancouver';
-  var apikey = "8fbb8ddb351860ae5fac593696e9a2c9"
-  const url = "https://api.openweathermap.org/data/2.5/weather?q=" + cityName + "&units=metric&appid=" + apikey
+app.post("/", function(req, res) {
+  // res.send("post req received" + req.body.cityName);
+  var apikey = "8fbb8ddb351860ae5fac593696e9a2c9";
+  const url = "https://api.openweathermap.org/data/2.5/weather?q=" + req.body.cityName + "&units=metric&appid=" + apikey
 
   https.get(url, function(https_res) {
-      https_res.on("data", function(data) {  
-      res.write("<h1> " + cityName + " weather is " + JSON.parse(data).weather[0].description) + "</h1>";
-      res.write("<h1> " + cityName + " temp is " + JSON.parse(data).main.temp) + "</h1>";
+    https_res.on("data", function(data) {
+      res.write("<h1> " + req.body.cityName + " weather is " + JSON.parse(data).weather[0].description) + "</h1>";
+      res.write("<h1> " + req.body.cityName + " temp is " + JSON.parse(data).main.temp) + "</h1>";
 
       // console.log(JSON.parse(data).weather[0].icon );
       res.write('  <img src="' + "http://openweathermap.org/img/wn/" + JSON.parse(data).weather[0].icon + '.png"' + "/>");
@@ -39,3 +56,4 @@ app.get("/", function(req, res) {
   });
 
 })
+
