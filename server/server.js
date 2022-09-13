@@ -98,3 +98,42 @@ app.delete("/delete/:city_name", function(req, res){
     res.send("All good! Delteted.")
   });
 })
+
+json_cities = require('./data.js');
+
+app.get('/cities_from_json_file', function (req, res) {
+  res.send(json_cities.list);
+})
+
+
+app.get('/cities_from_json_file/:city_name', function (req, res) {
+
+  res.send(json_cities.list.filter(function(i_){
+    return i_.name == req.params.city_name;
+  }));
+
+})
+
+function map_f(i_) {
+  return i_["tempreture"]
+
+}
+app.get('/cities_from_json_file/:city_name', function (req, res) {
+
+  res.send(json_cities.list.filter(function(i_){
+    return i_.name == req.params.city_name;
+  }).map(map_f));
+
+})
+
+function map_f(i_) {
+  return i_["tempreture"]
+
+}
+app.get('/cities_from_json_file/:city_name', function (req, res) {
+
+  res.send(json_cities.list.filter(function(i_){
+    return i_.name == req.params.city_name;
+  }).map(map_f));
+
+})
