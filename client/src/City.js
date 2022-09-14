@@ -2,6 +2,7 @@ import React from 'react'
 
 function City({ aCity }) {
   const { tempreture, name, description } = aCity;
+  console.log("aCity: ", aCity);
 
   return (
     <div>

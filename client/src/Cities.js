@@ -3,10 +3,10 @@ import City from './City'
 function Cities() {
 
   const [cities, setCities] = useState([])
-  const url = "http://localhost:3000/cities"
+  const url = "http://localhost:5000/cities_from_json_file"
   useEffect(() => {
     fetch(url)
-      .then((resp) => { console.log(resp.json); return resp.json() })
+      .then((resp) => { console.log(resp); return resp.json() })
       .then((jsonedResp) => { setCities(jsonedResp)})
   }, [])
 
@@ -16,7 +16,8 @@ function Cities() {
       <hr />
       {
         cities.map((aCity) => {
-        return <City aCity={aCity} />
+            console.log(cities);
+            return <City aCity={aCity} />
         })
       }
     </>
