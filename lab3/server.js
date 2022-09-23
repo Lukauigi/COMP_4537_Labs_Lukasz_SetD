@@ -1,7 +1,7 @@
 const express = require('express')
 
 const app = express()
-const port = 5000
+//const port = 5000
 
 //var { unicornsJSON } = require('./data.js')
 
@@ -11,7 +11,7 @@ const writeFileAsync = util.promisify(writeFile)
 const readFileAsync = util.promisify(readFile)
 var unicornsJSON = []
 
-app.listen(port, async () => {
+app.listen(process.env.PORT || 5000, async () => {
     try {
       unicornsJSON = await readFileAsync('./data.json', 'utf-8')
       if (!unicornsJSON) {
@@ -24,7 +24,7 @@ app.listen(port, async () => {
       console.log(error);
     }
   
-    console.log(`Example app listening on port ${port}`)
+    console.log(`Example app listening on port 5000`)
 })
 
 app.get('/api/v1/unicorns', (req, res) => {
@@ -40,7 +40,11 @@ app.post('/api/v1/unicorn', (req, res) => {
 
     //update the file
     writeFileAsync('./data.js', JSON.stringify(unicornsJSON), 'utf-8')
-        .then(() => { })
+        .then(() => {
+            unicornsJSON.push(req.body)
+            console.log(unicornsJSON)
+            res.send('Create a new unicorn')
+         })
         .catch((err) => { console.log(err); })
 })
 
@@ -71,7 +75,16 @@ app.patch('/api/v1/unicorn/:id', (req, res) => {
 
     //update the file
     writeFileAsync('./data.js', JSON.stringify(unicornsJSON), 'utf-8')
-        .then(() => { })
+        .then(() => { 
+            unicornsJSON = unicornsJSON.map(({ _id, ...aUnicorn }) => {
+                    if (_id == req.body._id) {
+                        console.log("Bingo!");
+                        return req.body
+                    } else
+                        return aUnicorn
+                    })
+                res.send("Updated successfully!")
+        })
         .catch((err) => { console.log(err); })
 })
 
@@ -82,6 +95,10 @@ app.delete('/api/v1/unicorn/:id', (req, res) => {
 
     //update the file
     writeFileAsync('./data.js', JSON.stringify(unicornsJSON), 'utf-8')
-        .then(() => { })
+        .then(() => { 
+            unicornsJSON = unicornsJSON.filter((element) => element._id != req.params.id)
+            console.log(unicornsJSON)
+            res.send("Deleted successfully?")
+         })
         .catch((err) => { console.log(err); })
 })
