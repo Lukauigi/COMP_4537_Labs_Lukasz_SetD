@@ -6,7 +6,7 @@ const port = 5000
 
 app.listen(port, async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/test')
+    await mongoose.connect('mongodb+srv://lukasz:MGgG7exYk9h86YDz@cluster0.6rpvvsp.mongodb.net/?retryWrites=true&w=majority')
   } catch (error) {
     console.log('db error');
   }
@@ -68,7 +68,7 @@ app.get('/api/v2/unicorn/:id', (req, res) => {
 
 app.patch('/api/v2/unicorn/:id', (req, res) => {
   const { _id, ...rest } = req.body;
-  unicornModel.updateOne({ _id: mongoose.Types.ObjectId(req.params.id) }, rest, function (err, res) {
+  unicornModel.updateOne({ _id: mongoose.Types.ObjectId(`${req.params.id}`) }, rest, function (err, res) {
     if (err) console.log(err)
     console.log(res)
   });
