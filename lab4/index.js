@@ -68,7 +68,7 @@ app.get('/api/v2/unicorn/:id', (req, res) => {
 
 app.patch('/api/v2/unicorn/:id', (req, res) => {
   const { _id, ...rest } = req.body;
-  unicornModel.updateOne({ _id: mongoose.Types.ObjectId(`${req.params.id}`) }, rest, function (err, res) {
+  unicornModel.updateOne({ _id: mongoose.Types.ObjectId(req.params.id) }, { $set: {...rest} }, { runValidators: true }, function (err, res) {
     if (err) console.log(err)
     console.log(res)
   });
