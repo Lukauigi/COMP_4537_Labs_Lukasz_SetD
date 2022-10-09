@@ -8,19 +8,39 @@ const { Schema } = mongoose;
 const pokemonJsonUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/pokedex.json"
 const pokemonTypesJsonUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/types.json"
 
+var pokemonTypes = [];
+
 app.listen(process.env.PORT || port, async () => {
     try {
-        // create the schema
+      // create the schema
       // create the model
       // populate db with pokemons
       await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
       mongoose.connection.db.dropDatabase()
       await initiateMongooseData()
-
     } catch (error) {
       console.log('db error');
     }
     
+  })
+
+  // Get all pokemon types and insert them into an enum
+  https.get(pokemonTypesJsonUrl, async (res) => {
+    try {
+        var chuncks = "";
+        res.on("data", function (chunk) {
+            chuncks += chunk;
+        })
+        res.on("end", function (data) {
+            const response = JSON.parse(chuncks)
+            response.map(element => { pokemonTypes.push(element['english']) })
+            pokemonTypes.forEach(index => console.log(index))
+            console.log('mapped data')
+            Object.freeze(pokemonTypes) //does not allow for changes to object
+        })
+    } catch (error) {
+        console.log('could not get pokemon type data');
+    }
   })
 
   const initiateMongooseData = async () => {
@@ -31,7 +51,7 @@ app.listen(process.env.PORT || port, async () => {
             "chinese": String,
             "french": String
         },
-        "type": [{ type: String, validate: [pokemonTypeLimit, 'Pokemon type must be 1 or 2 types only']}],
+        "type": [{ type: String, enum: pokemonTypes, validate: [pokemonTypeLimit, 'Pokemon type must be 1 or 2 types only']}],
         "base": {
             "HP": Number,
             "Attack": Number,
