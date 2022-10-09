@@ -30,11 +30,25 @@ app.listen(process.env.PORT || port, async () => {
             res.on("end", async function (data) {
                 const response = JSON.parse(chunks)
                 console.log('got pokemon data');
-                console.log(response[2]);
+                console.log(response[2].base['Sp. Attack']);
 
                 // create a document in db for every pokemon in json
-                response.map(element => { 
-                    pokemonModel.create(element, function (error) {
+                response.map(element => {
+                    // https://stackoverflow.com/questions/10333540/mongo-dot-notation-ambiguity
+                    // I have to manually fill fields or Sp. Attack & Sp. Defense will be a object called Sp with attack & defense fields, which is not the intended design of the model.
+                    pokemonModel.create({
+                        "name": element.name,
+                        "type": element.type,
+                        "base": {
+                            "HP": element.base['HP'],
+                            "Attack": element.base['Attack'],
+                            "Defense": element.base['Defense'],
+                            "Speed": element.base['Speed'],
+                            "Special Attack": element.base['Sp. Attack'],
+                            "Special Defense": element.base['Sp. Defense']
+                        },
+                        "id": element.id
+                    }, function (error) {
                         if (error) console.log(`could not create this pokemon in db: ${element}`);
                     })
                 })
@@ -72,7 +86,7 @@ app.listen(process.env.PORT || port, async () => {
   const initiatizePokemonSchema = async () => {
     pokemonSchema = new Schema({
         "name": {
-            "english": String,
+            "english": { type: String, max: 20 },
             "japanese": String,
             "chinese": String,
             "french": String
@@ -83,8 +97,8 @@ app.listen(process.env.PORT || port, async () => {
             "Attack": Number,
             "Defense": Number,
             "Speed": Number,
-            "Sp. Attack": Number,
-            "Sp. Defense": Number
+            "Special Attack": Number,
+            "Special Defense": Number
         },
         "id": { type: Number, unique: true }
       })
