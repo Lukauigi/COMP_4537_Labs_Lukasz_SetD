@@ -23,30 +23,6 @@ app.listen(process.env.PORT || port, async () => {
     
   })
 
-//   const pokemonSchema = new Schema({
-//     "name": {
-//         "english": String,
-//         "japanese": String,
-//         "chinese": String,
-//         "french": String
-//     },
-//     "type": [{ type: String, validate: [pokemonTypeLimit, 'Pokemon type must be 1 or 2 types only']}],
-//     "base": {
-//         "HP": Number,
-//         "Attack": Number,
-//         "Defense": Number,
-//         "Speed": Number,
-//         "Sp. Attack": Number,
-//         "Sp. Defense": Number
-//     },
-//     "id": { type: Number, unique: true }
-//   })
-
-//   const pokemonModel = mongoose.model('pokemon', pokemonSchema);
-
-
-
-
   const initiateMongooseData = async () => {
     pokemonSchema = new Schema({
         "name": {
