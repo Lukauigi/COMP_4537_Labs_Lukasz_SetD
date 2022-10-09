@@ -4,17 +4,76 @@ const https = require('https')
 
 const app = express()
 const port = 5000
+const { Schema } = mongoose;
+const pokemonJsonUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/pokedex.json"
+const pokemonTypesJsonUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/types.json"
 
 app.listen(process.env.PORT || port, async () => {
     try {
+        // create the schema
+      // create the model
+      // populate db with pokemons
       await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
+      mongoose.connection.db.dropDatabase()
+      await initiateMongooseData()
+
     } catch (error) {
       console.log('db error');
     }
+    
   })
-  
-  
-const { Schema } = mongoose;
+
+//   const pokemonSchema = new Schema({
+//     "name": {
+//         "english": String,
+//         "japanese": String,
+//         "chinese": String,
+//         "french": String
+//     },
+//     "type": [{ type: String, validate: [pokemonTypeLimit, 'Pokemon type must be 1 or 2 types only']}],
+//     "base": {
+//         "HP": Number,
+//         "Attack": Number,
+//         "Defense": Number,
+//         "Speed": Number,
+//         "Sp. Attack": Number,
+//         "Sp. Defense": Number
+//     },
+//     "id": { type: Number, unique: true }
+//   })
+
+//   const pokemonModel = mongoose.model('pokemon', pokemonSchema);
+
+
+
+
+  const initiateMongooseData = async () => {
+    pokemonSchema = new Schema({
+        "name": {
+            "english": String,
+            "japanese": String,
+            "chinese": String,
+            "french": String
+        },
+        "type": [{ type: String, validate: [pokemonTypeLimit, 'Pokemon type must be 1 or 2 types only']}],
+        "base": {
+            "HP": Number,
+            "Attack": Number,
+            "Defense": Number,
+            "Speed": Number,
+            "Sp. Attack": Number,
+            "Sp. Defense": Number
+        },
+        "id": { type: Number, unique: true }
+      })
+
+      const pokemonModel = mongoose.model('pokemon', pokemonSchema);
+
+  }
+
+function pokemonTypeLimit(value) {
+    return 1 <= value.length <= 2;
+}
 
 
 // get all pokemons
