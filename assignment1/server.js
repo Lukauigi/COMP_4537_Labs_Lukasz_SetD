@@ -91,7 +91,16 @@ app.listen(process.env.PORT || port, async () => {
             "chinese": String,
             "french": String
         },
-        "type": [{ type: String, enum: pokemonTypes, validate: [pokemonTypeLimit, 'Pokemon type must be 1 or 2 types only']}],
+        //"type": [{ type: String, enum: pokemonTypes, validate: { validator: pokemonTypeLimit } }],
+        "type": [{ 
+            type: String, 
+            enum: pokemonTypes, 
+            validate: {
+                validator: function() {
+                    return 1 >= this.type.length <= 2;
+                },
+                message: 'pokemon type must be 1 or 2 type(s)'
+        }}],
         "base": {
             "HP": Number,
             "Attack": Number,
@@ -106,6 +115,9 @@ app.listen(process.env.PORT || port, async () => {
 
 // Validates if the type limit is 1 or 2 types in type array
 function pokemonTypeLimit(value) {
+    console.log(`validate this ${value.length}`)
+    console.log(1 <= value.length);
+    console.log(1 <= value.length <= 2);
     return 1 <= value.length <= 2;
 }
 
