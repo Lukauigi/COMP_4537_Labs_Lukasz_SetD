@@ -12,12 +12,38 @@ var pokemonTypes = [];
 
 app.listen(process.env.PORT || port, async () => {
     try {
-      // create the schema
-      // create the model
-      // populate db with pokemons
+      // connect to database
       await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
-      mongoose.connection.db.dropDatabase()
-      await initiateMongooseData()
+      mongoose.connection.db.dropCollection('pokemons') //drop previous collection records
+
+      // initialize pokemon schema & model
+      await initiatizePokemonSchema()
+      const pokemonModel = mongoose.model('pokemon', pokemonSchema);
+
+      // populate the database with pokemon
+      https.get(pokemonJsonUrl, async (res) => {
+        try {
+            var chunks = ""; // all chunks of pokemon data, init to empty
+            res.on("data", function (chunk) {
+                chunks += chunk; // append each data chunk to chunks container
+            })
+            res.on("end", async function (data) {
+                const response = JSON.parse(chunks)
+                console.log('got pokemon data');
+                console.log(response[2]);
+
+                // create a document in db for every pokemon in json
+                response.map(element => { 
+                    pokemonModel.create(element, function (error) {
+                        if (error) console.log(`could not create this pokemon in db: ${element}`);
+                    })
+                })
+            })
+        } catch (error) {
+            console.log('could not get pokemon type data');
+        }
+      })
+
     } catch (error) {
       console.log('db error');
     }
@@ -27,14 +53,13 @@ app.listen(process.env.PORT || port, async () => {
   // Get all pokemon types and insert them into an enum
   https.get(pokemonTypesJsonUrl, async (res) => {
     try {
-        var chuncks = "";
+        var chunks = ""; // all chunks of pokemon data, init to empty
         res.on("data", function (chunk) {
-            chuncks += chunk;
+            chunks += chunk; // append each data chunk to chunks container
         })
         res.on("end", function (data) {
-            const response = JSON.parse(chuncks)
-            response.map(element => { pokemonTypes.push(element['english']) })
-            pokemonTypes.forEach(index => console.log(index))
+            const response = JSON.parse(chunks)
+            response.map(element => { pokemonTypes.push(element['english']) }) // get all english types names as enums
             console.log('mapped data')
             Object.freeze(pokemonTypes) //does not allow for changes to object
         })
@@ -43,7 +68,8 @@ app.listen(process.env.PORT || port, async () => {
     }
   })
 
-  const initiateMongooseData = async () => {
+  // creates pokemon schema 
+  const initiatizePokemonSchema = async () => {
     pokemonSchema = new Schema({
         "name": {
             "english": String,
@@ -62,11 +88,9 @@ app.listen(process.env.PORT || port, async () => {
         },
         "id": { type: Number, unique: true }
       })
-
-      const pokemonModel = mongoose.model('pokemon', pokemonSchema);
-
   }
 
+// Validates if the type limit is 1 or 2 types in type array
 function pokemonTypeLimit(value) {
     return 1 <= value.length <= 2;
 }
