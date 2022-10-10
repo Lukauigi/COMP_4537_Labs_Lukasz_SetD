@@ -19,7 +19,6 @@ var pokemonTypes = [];
             "chinese": String,
             "french": String
         },
-        //"type": [{ type: String, enum: pokemonTypes, validate: { validator: pokemonTypeLimit } }],
         "type": [{ 
             type: String, 
             enum: pokemonTypes, 
