@@ -36,7 +36,10 @@ var pokemonTypes = [];
             "Special Attack": Number,
             "Special Defense": Number
         },
-        "id": { type: Number, unique: true }
+        "id": { 
+            type: Number, 
+            unique: true
+        }
       })
 
       return pokemonSchema;
@@ -121,6 +124,8 @@ app.listen(process.env.PORT || port, async () => {
       })
   }
 
+app.use(express.json())
+
 // get all pokemons within a range
 app.get('/api/v1/pokemons', (req, res) => {
     if (+req.query.count && +req.query.after) {
@@ -147,7 +152,24 @@ app.get('/api/v1/pokemons', (req, res) => {
 
 // create a new pokemon
 app.post('/api/v1/pokemon', (req, res) => {
-    res.send('here are pokemons')
+    console.log(`find me: ${Object.keys(req)}`);
+    pokemonModel.create({
+        "name": req.body.name,
+        "type": req.body.type,
+        "base": {
+            "HP": req.body.base['HP'],
+            "Attack": req.body.base['Attack'],
+            "Defense": req.body.base['Defense'],
+            "Speed": req.body.base['Speed'],
+            "Special Attack": req.body.base['Special Attack'],
+            "Special Defense": req.body.base['Special Defense']
+        },
+        "id": req.body.id
+    }).then(
+        res.json({ msg: "Added Successfully"})
+    ).catch( error => {
+        console.log(error);
+    })
 })
 
 // get a pokemon
@@ -157,7 +179,7 @@ app.get('/api/v1/pokemon/:id', (req, res) => {
         else res.json(document)
     }).catch(error => {
         console.error(error)
-        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811'})
+        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
     })
 })
 
@@ -173,18 +195,39 @@ app.put('/api/v1/pokemon/:id', (req, res) => {
 
 // patch a pokemon document or a portion of the pokemon document
 app.patch('/api/v1/pokemon/:id', (req, res) => {
-    res.send('here are pokemons')
+    //const { id, ...rest } = req.body
+    pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
+        "base" : {
+            "HP": req.body.base['HP'],
+            "Attack": req.body.base['Attack'],
+            "Defense": req.body.base['Defense'],
+            "Speed": req.body.base['Speed'],
+            "Special Attack": req.body.base['Special Attack'],
+            "Special Defense": req.body.base['Special Defense']
+        }
+     }).then(document => {
+        if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
+        res.json({ msg: "Updated Successfully", pokeInfo: document })
+    }).catch(error => {
+        console.error(error)
+        res.json()
+    })
 })
 
 // delete a pokemon
 app.delete('/api/v1/pokemon/:id', (req, res) => {
-    pokemonModel.findOneAndDelete({ id: req.params.id }).then(document => {
-        if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
-        res.json({ msg: "Deleted Successfully", pokeInfo: document })
-    }).catch(error => {
-        console.error(error)
-        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811'})
-    })
+    try {
+        pokemonModel.findOneAndDelete({ id: req.params.id }).then(document => {
+            if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
+            res.json({ msg: "Deleted Successfully", pokeInfo: document })
+        }).catch(error => {
+            console.error(error)
+            res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811'})
+        })
+    } catch (err) {
+        console.log(err);
+    }
+    
 })
 
 // app.get('api/doc')
