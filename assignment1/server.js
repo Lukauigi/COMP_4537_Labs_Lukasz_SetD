@@ -153,11 +153,11 @@ app.post('/api/v1/pokemon', (req, res) => {
 // get a pokemon
 app.get('/api/v1/pokemon/:id', (req, res) => {
     pokemonModel.findOne({ id: req.params.id }).then(document => {
-        if (document == null) res.send('A pokemon with that id does not exist. Try an integer id between 1 and 809')
+        if (document == null) res.json({errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809'})
         else res.json(document)
     }).catch(error => {
         console.error(error)
-        res.json({ msg: 'Could not query database'})
+        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811'})
     })
 })
 
@@ -171,14 +171,17 @@ app.put('/api/v1/pokemon/:id', (req, res) => {
     res.send('here are pokemons')
 })
 
-// patch a pokemon document or a
+// patch a pokemon document or a portion of the pokemon document
 app.patch('/api/v1/pokemon/:id', (req, res) => {
     res.send('here are pokemons')
 })
-                                                    //   portion of the pokemon document
-// delete a  pokemon
+
+// delete a pokemon
 app.delete('/api/v1/pokemon/:id', (req, res) => {
-    res.send('here are pokemons')
+    pokemonModel.deleteOne({ id: req.params.id }, function (err, result) {
+        if (err) res.send('Could not delete pokemon with an unmatching id. Try an integer id between 1 and 809');
+        else console.log(result);
+    })
 })
 
 // app.get('api/doc')
