@@ -9,6 +9,7 @@ Demonstrating the following in a YT short video
     - [✔] GETing a pokémon. 
     - [✔] GETing a pokémon - pokémon not found. 
     - [✔] GETing a pokémon - improper key used to get a pokémon.
+    - [✔] GETing a pokémon's image
   - POST [1]
     - [✔] POSTing a pokémon. 
     - [X] POSTing a pokémon - improper data
