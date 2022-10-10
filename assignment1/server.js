@@ -128,6 +128,9 @@ app.use(express.json())
 app.get('/api/v1/pokemons', (req, res) => {
     console.log(req.query);
     console.log(req.query.count);
+
+    
+
     if (req.query.count === undefined || req.query.after === undefined) {
         pokemonModel.find({})
         .then(docs => {
@@ -138,10 +141,11 @@ app.get('/api/v1/pokemons', (req, res) => {
           console.error(err)
           res.json({ msg: "server is down" })
         })
-    } else if (+req.query.count && +req.query.after) {
+    } else if (Number.isInteger(+req.query.count) && Number.isInteger(+req.query.after)) {
         try {
-            var after = +req.query.after; //extract number from string
-            var count = +req.query.count; //extract number form string
+            let after = +req.query.after; //extract number from string
+            let count = +req.query.count; //extract number form string
+            console.log(after);
 
             pokemonModel.find({ 
                 id: {$gt : after, $lte : (count+after)} //get pokemon between query params 
@@ -156,7 +160,7 @@ app.get('/api/v1/pokemons', (req, res) => {
             res.json({ errMsg: 'error querying pokemon'} )
         }    
     } else {
-        res.send('enter query params for count & after as numbers');
+        res.json({ errMsg: 'enter query params for count & after as numbers'});
     }
 })
 
