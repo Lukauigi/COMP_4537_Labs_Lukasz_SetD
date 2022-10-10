@@ -234,3 +234,8 @@ app.delete('/api/v1/pokemon/:id', (req, res) => {
 app.get('/api/doc', (req, res) => {
     res.send('here is the documenation')
 })
+
+// handle import route
+app.get('*', function(req, res) {
+    res.json({ msg: 'Improper route. Check API docs plz.' })
+})
