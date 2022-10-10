@@ -48,7 +48,7 @@ app.listen(process.env.PORT || port, async () => {
     try {
       // connect to database
       await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
-      mongoose.connection.db.dropCollection('pokemons') //drop previous collection records
+      //await mongoose.connection.db.dropDatabase() //drop previous collection records
 
       // populate the database with pokemon
       await populateDatabase();
@@ -81,19 +81,20 @@ app.listen(process.env.PORT || port, async () => {
     https.get(pokemonJsonUrl, (res) => {
         try {
             var chunks = ""; // all chunks of pokemon data, init to empty
-            res.on("data", function (chunk) {
+            res.on("data", async function (chunk) {
                 chunks += chunk; // append each data chunk to chunks container
             })
             res.on("end", async function (data) {
-                const response = JSON.parse(chunks)
+                const response = await JSON.parse(chunks)
+                console.log(Object.keys(response).length);
                 console.log('got pokemon data');
                 console.log(response[2].base['Sp. Attack']);
 
                 // create a document in db for every pokemon in json
-                response.map(async element => {
+                response.map(element => {
                     // https://stackoverflow.com/questions/10333540/mongo-dot-notation-ambiguity
                     // I have to manually fill fields or Sp. Attack & Sp. Defense will be a object called Sp with attack & defense fields, which is not the intended design of the model.
-                    await pokemonModel.create({
+                    pokemonModel.create({
                         "name": element.name,
                         "type": element.type,
                         "base": {
@@ -106,7 +107,11 @@ app.listen(process.env.PORT || port, async () => {
                         },
                         "id": element.id
                     }, function (error) {
-                        if (error) console.log(`could not create this pokemon in db: ${element}`);
+                        if (error) {
+                            //console.log(`could not create pokemon with id: ${element.id} in db`);
+                            //console.log(error);
+                            return ;
+                        }
                     })
                 })
             })
@@ -116,29 +121,29 @@ app.listen(process.env.PORT || port, async () => {
       })
   }
 
-// get all pokemons
+// get all pokemons with query params: count & after
 app.get('/api/v1/pokemons', (req, res) => {
-    if (req.query.count && req.query.after) {
-        var after = req.query.after;
-        var count = req.query.count;
+    if (+req.query.count && +req.query.after) {
+        try {
+            var after = +req.query.after; //extract number from string
+            var count = +req.query.count; //extract number form string
 
-        pokemonModel.find({ id: { 
-            $where:  function() { return (after <= this.id >= count) }
-        }}).then(records => {
-            console.log(records);
-        }).catch(err => {
-            console.log(err);
-        })
-
-        res.send(`count: ${req.query.count} \nafter: ${req.query.after}`)
+            pokemonModel.find({ 
+                id: {$gt : after, $lte : (count+after)} //get pokemon between query params 
+            }).then(records => {
+                console.log("records length: " + records.length);
+                records.forEach(index => console.log(index.id));
+                res.send(JSON.stringify(records, null, '\t'))
+            }).catch(err => {
+                console.log(err);
+            })
+        } catch (error) {
+            res.send('count & after must be numbers')
+        }    
     } else {
-        res.send('not 2 params');
+        res.send('enter query params for count & after as numbers');
     }
 })
-// get all the pokemons after the 10th. List only Two.
-// app.get('/api/v1/pokemons?count=2&after=10', (req, res) => {
-//     res.send(req.query.count);
-// })
 // create a new pokemon
 app.post('/api/v1/pokemon', (req, res) => {
     res.send('here are pokemons')
