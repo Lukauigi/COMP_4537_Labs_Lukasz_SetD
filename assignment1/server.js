@@ -121,7 +121,7 @@ app.listen(process.env.PORT || port, async () => {
       })
   }
 
-// get all pokemons with query params: count & after
+// get all pokemons within a range
 app.get('/api/v1/pokemons', (req, res) => {
     if (+req.query.count && +req.query.after) {
         try {
@@ -138,28 +138,39 @@ app.get('/api/v1/pokemons', (req, res) => {
                 console.log(err);
             })
         } catch (error) {
-            res.send('count & after must be numbers')
+            res.send('error querting pokemon')
         }    
     } else {
         res.send('enter query params for count & after as numbers');
     }
 })
+
 // create a new pokemon
 app.post('/api/v1/pokemon', (req, res) => {
     res.send('here are pokemons')
 })
+
 // get a pokemon
 app.get('/api/v1/pokemon/:id', (req, res) => {
-    res.send('here are pokemons')
+    pokemonModel.findOne({ id: req.params.id }).then(document => {
+        if (document == null) res.send('A pokemon with that id does not exist. Try an integer id between 1 and 809')
+        else res.json(document)
+    }).catch(error => {
+        console.error(error)
+        res.json({ msg: 'Could not query database'})
+    })
 })
+
 // get a pokemon Image URL
 app.get('/api/v1/pokemonImage/:id', (req, res) => {
     res.send('here are pokemons')
 })
+
 // upsert a whole pokemon document
 app.put('/api/v1/pokemon/:id', (req, res) => {
     res.send('here are pokemons')
 })
+
 // patch a pokemon document or a
 app.patch('/api/v1/pokemon/:id', (req, res) => {
     res.send('here are pokemons')
