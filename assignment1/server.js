@@ -23,13 +23,8 @@ var pokemonTypes = [];
         },
         "type": [{ 
             type: String, 
-            enum: pokemonTypes, 
-            validate: {
-                validator: function() {
-                    return 1 >= this.type.length <= 2;
-                },
-                message: 'pokemon type must be 1 or 2 type(s)'
-        }}],
+            enum: pokemonTypes,
+    }],
         "base": {
             "HP": Number,
             "Attack": Number,
@@ -75,6 +70,7 @@ app.listen(process.env.PORT || port, async () => {
             const response = JSON.parse(chunks)
             response.map(element => { pokemonTypes.push(element['english']) }) // get all english types names as enums
             console.log('mapped data')
+            console.log(pokemonTypes);
             Object.freeze(pokemonTypes) //does not allow for changes to object
         })
     } catch (error) {
