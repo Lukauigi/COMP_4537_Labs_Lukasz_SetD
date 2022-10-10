@@ -178,9 +178,12 @@ app.patch('/api/v1/pokemon/:id', (req, res) => {
 
 // delete a pokemon
 app.delete('/api/v1/pokemon/:id', (req, res) => {
-    pokemonModel.deleteOne({ id: req.params.id }, function (err, result) {
-        if (err) res.send('Could not delete pokemon with an unmatching id. Try an integer id between 1 and 809');
-        else console.log(result);
+    pokemonModel.findOneAndDelete({ id: req.params.id }).then(document => {
+        if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
+        res.json({ msg: "Deleted Successfully", pokeInfo: document })
+    }).catch(error => {
+        console.error(error)
+        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811'})
     })
 })
 
