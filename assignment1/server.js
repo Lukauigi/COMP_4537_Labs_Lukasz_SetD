@@ -1,12 +1,14 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const https = require('https')
+const request = require('request')
 
 const app = express()
 const port = 5000
 const { Schema } = mongoose;
 const pokemonJsonUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/pokedex.json"
 const pokemonTypesJsonUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/types.json"
+const pokemonImagesBaseUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/images/"
 
 var pokemonTypes = [];
 
@@ -185,7 +187,41 @@ app.get('/api/v1/pokemon/:id', (req, res) => {
 
 // get a pokemon Image URL
 app.get('/api/v1/pokemonImage/:id', (req, res) => {
-    res.send('here are pokemons')
+    pokemonModel.findOne({ id: req.params.id }).then(document => {
+        let idNumber = document.id.toString();
+        let imageFileName = '.png'
+
+        // determines if and how much 0s need to be prepend to the image's filename
+        switch (idNumber.length) {
+            case 1:
+                imageFileName = '00' + idNumber + imageFileName
+                break;
+            case 2:
+                imageFileName = '0' + idNumber + imageFileName
+                break;
+            case 3:
+                imageFileName = idNumber + imageFileName
+                break;
+        }
+
+        console.log(pokemonImagesBaseUrl + imageFileName);
+
+        // credit: https://stackoverflow.com/questions/60754335/how-do-i-send-image-data-from-a-url-using-express
+        //      user: Fadil Natakusumah
+        request({
+            url: pokemonImagesBaseUrl + imageFileName,
+            encoding: null
+        },
+        (error, response, buffer) => {
+            if (!error && response.statusCode === 200) {
+                res.set('Content-Type', 'image/png')
+                res.send(response.body)
+            }
+        })
+    }).catch(error => {
+        console.error(error)
+        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
+    })
 })
 
 // upsert a whole pokemon document
