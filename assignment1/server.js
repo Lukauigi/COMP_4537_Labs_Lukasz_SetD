@@ -190,12 +190,30 @@ app.get('/api/v1/pokemonImage/:id', (req, res) => {
 
 // upsert a whole pokemon document
 app.put('/api/v1/pokemon/:id', (req, res) => {
-    res.send('here are pokemons')
+    const { ...rest } = req.body
+    pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
+        "name": req.body.name,
+        "type": req.body.type,
+        "base": {
+            "HP": req.body.base['HP'],
+            "Attack": req.body.base['Attack'],
+            "Defense": req.body.base['Defense'],
+            "Speed": req.body.base['Speed'],
+            "Special Attack": req.body.base['Special Attack'],
+            "Special Defense": req.body.base['Special Defense']
+        },
+        "id": req.body.id
+     }, { upsert: true, returnOriginal: false, $set: {...rest}, runValidators: true }).then(document => {
+        if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
+        res.json({ msg: "Updated Successfully", pokeInfo: document })
+    }).catch(error => {
+        console.error(error)
+        res.json({ msg: 'Not found'})
+    })
 })
 
 // patch a pokemon document or a portion of the pokemon document
 app.patch('/api/v1/pokemon/:id', (req, res) => {
-    //const { id, ...rest } = req.body
     pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
         "base" : {
             "HP": req.body.base['HP'],
@@ -205,7 +223,7 @@ app.patch('/api/v1/pokemon/:id', (req, res) => {
             "Special Attack": req.body.base['Special Attack'],
             "Special Defense": req.body.base['Special Defense']
         }
-     }).then(document => {
+     }, { returnOriginal: false } ).then(document => {
         if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
         res.json({ msg: "Updated Successfully", pokeInfo: document })
     }).catch(error => {
