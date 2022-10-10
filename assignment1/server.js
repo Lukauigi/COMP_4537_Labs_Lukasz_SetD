@@ -127,8 +127,8 @@ app.use(express.json())
 // get all pokemons or within a range
 app.get('/api/v1/pokemons', (req, res) => {
     console.log(req.query);
-    console.log(req.query.length);
-    if (req.query.length === undefined) {
+    console.log(req.query.count);
+    if (req.query.count === undefined || req.query.after === undefined) {
         pokemonModel.find({})
         .then(docs => {
           console.log(docs.length)
@@ -153,7 +153,7 @@ app.get('/api/v1/pokemons', (req, res) => {
                 console.log(err);
             })
         } catch (error) {
-            res.send('error querting pokemon')
+            res.json({ errMsg: 'error querying pokemon'} )
         }    
     } else {
         res.send('enter query params for count & after as numbers');
