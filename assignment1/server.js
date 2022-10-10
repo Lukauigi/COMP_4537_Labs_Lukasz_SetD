@@ -10,81 +10,9 @@ const pokemonTypesJsonUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.j
 
 var pokemonTypes = [];
 
-app.listen(process.env.PORT || port, async () => {
-    try {
-      // connect to database
-      await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
-      mongoose.connection.db.dropCollection('pokemons') //drop previous collection records
-
-      // initialize pokemon schema & model
-      await initiatizePokemonSchema()
-      const pokemonModel = mongoose.model('pokemon', pokemonSchema);
-
-      // populate the database with pokemon
-      https.get(pokemonJsonUrl, async (res) => {
-        try {
-            var chunks = ""; // all chunks of pokemon data, init to empty
-            res.on("data", function (chunk) {
-                chunks += chunk; // append each data chunk to chunks container
-            })
-            res.on("end", async function (data) {
-                const response = JSON.parse(chunks)
-                console.log('got pokemon data');
-                console.log(response[2].base['Sp. Attack']);
-
-                // create a document in db for every pokemon in json
-                response.map(element => {
-                    // https://stackoverflow.com/questions/10333540/mongo-dot-notation-ambiguity
-                    // I have to manually fill fields or Sp. Attack & Sp. Defense will be a object called Sp with attack & defense fields, which is not the intended design of the model.
-                    pokemonModel.create({
-                        "name": element.name,
-                        "type": element.type,
-                        "base": {
-                            "HP": element.base['HP'],
-                            "Attack": element.base['Attack'],
-                            "Defense": element.base['Defense'],
-                            "Speed": element.base['Speed'],
-                            "Special Attack": element.base['Sp. Attack'],
-                            "Special Defense": element.base['Sp. Defense']
-                        },
-                        "id": element.id
-                    }, function (error) {
-                        if (error) console.log(`could not create this pokemon in db: ${element}`);
-                    })
-                })
-            })
-        } catch (error) {
-            console.log('could not get pokemon type data');
-        }
-      })
-
-    } catch (error) {
-      console.log('db error');
-    }
-    
-  })
-
-  // Get all pokemon types and insert them into an enum
-  https.get(pokemonTypesJsonUrl, async (res) => {
-    try {
-        var chunks = ""; // all chunks of pokemon data, init to empty
-        res.on("data", function (chunk) {
-            chunks += chunk; // append each data chunk to chunks container
-        })
-        res.on("end", function (data) {
-            const response = JSON.parse(chunks)
-            response.map(element => { pokemonTypes.push(element['english']) }) // get all english types names as enums
-            console.log('mapped data')
-            Object.freeze(pokemonTypes) //does not allow for changes to object
-        })
-    } catch (error) {
-        console.log('could not get pokemon type data');
-    }
-  })
-
   // creates pokemon schema 
-  const initiatizePokemonSchema = async () => {
-    pokemonSchema = new Schema({
+  const initiatizePokemonSchema = () => {
+    var pokemonSchema = new Schema({
         "name": {
             "english": { type: String, max: 20 },
             "japanese": String,
@@ -111,25 +39,107 @@ app.listen(process.env.PORT || port, async () => {
         },
         "id": { type: Number, unique: true }
       })
+
+      return pokemonSchema;
   }
 
-// Validates if the type limit is 1 or 2 types in type array
-function pokemonTypeLimit(value) {
-    console.log(`validate this ${value.length}`)
-    console.log(1 <= value.length);
-    console.log(1 <= value.length <= 2);
-    return 1 <= value.length <= 2;
-}
+const pokemonModel = mongoose.model('pokemon', initiatizePokemonSchema());
 
+app.listen(process.env.PORT || port, async () => {
+    try {
+      // connect to database
+      await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
+      mongoose.connection.db.dropCollection('pokemons') //drop previous collection records
+
+      // populate the database with pokemon
+      await populateDatabase();
+
+    } catch (error) {
+      console.log('db error');
+    }
+    
+  })
+
+  // Get all pokemon types and insert them into an enum
+  https.get(pokemonTypesJsonUrl, async (res) => {
+    try {
+        var chunks = ""; // all chunks of pokemon data, init to empty
+        res.on("data", function (chunk) {
+            chunks += chunk; // append each data chunk to chunks container
+        })
+        res.on("end", function (data) {
+            const response = JSON.parse(chunks)
+            response.map(element => { pokemonTypes.push(element['english']) }) // get all english types names as enums
+            console.log('mapped data')
+            Object.freeze(pokemonTypes) //does not allow for changes to object
+        })
+    } catch (error) {
+        console.log('could not get pokemon type data');
+    }
+  })
+
+  const populateDatabase = async () => {
+    https.get(pokemonJsonUrl, (res) => {
+        try {
+            var chunks = ""; // all chunks of pokemon data, init to empty
+            res.on("data", function (chunk) {
+                chunks += chunk; // append each data chunk to chunks container
+            })
+            res.on("end", async function (data) {
+                const response = JSON.parse(chunks)
+                console.log('got pokemon data');
+                console.log(response[2].base['Sp. Attack']);
+
+                // create a document in db for every pokemon in json
+                response.map(async element => {
+                    // https://stackoverflow.com/questions/10333540/mongo-dot-notation-ambiguity
+                    // I have to manually fill fields or Sp. Attack & Sp. Defense will be a object called Sp with attack & defense fields, which is not the intended design of the model.
+                    await pokemonModel.create({
+                        "name": element.name,
+                        "type": element.type,
+                        "base": {
+                            "HP": element.base['HP'],
+                            "Attack": element.base['Attack'],
+                            "Defense": element.base['Defense'],
+                            "Speed": element.base['Speed'],
+                            "Special Attack": element.base['Sp. Attack'],
+                            "Special Defense": element.base['Sp. Defense']
+                        },
+                        "id": element.id
+                    }, function (error) {
+                        if (error) console.log(`could not create this pokemon in db: ${element}`);
+                    })
+                })
+            })
+        } catch (error) {
+            console.log('could not get pokemon type data');
+        }
+      })
+  }
 
 // get all pokemons
 app.get('/api/v1/pokemons', (req, res) => {
-    res.send('here are pokemons')
+    if (req.query.count && req.query.after) {
+        var after = req.query.after;
+        var count = req.query.count;
+
+        pokemonModel.find({ id: { 
+            $where:  function() { return (after <= this.id >= count) }
+        }}).then(records => {
+            console.log(records);
+        }).catch(err => {
+            console.log(err);
+        })
+
+        res.send(`count: ${req.query.count} \nafter: ${req.query.after}`)
+    } else {
+        res.send('not 2 params');
+    }
 })
 // get all the pokemons after the 10th. List only Two.
-app.get('/api/v1/pokemons?count=2&after=10', (req, res) => {
-    res.send('here are pokemons')
-})
+// app.get('/api/v1/pokemons?count=2&after=10', (req, res) => {
+//     res.send(req.query.count);
+// })
 // create a new pokemon
 app.post('/api/v1/pokemon', (req, res) => {
     res.send('here are pokemons')
