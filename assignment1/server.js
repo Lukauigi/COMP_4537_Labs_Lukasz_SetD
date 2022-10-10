@@ -128,9 +128,21 @@ app.listen(process.env.PORT || port, async () => {
 
 app.use(express.json())
 
-// get all pokemons within a range
+// get all pokemons or within a range
 app.get('/api/v1/pokemons', (req, res) => {
-    if (+req.query.count && +req.query.after) {
+    console.log(req.query);
+    console.log(req.query.length);
+    if (req.query.length === undefined) {
+        pokemonModel.find({})
+        .then(docs => {
+          console.log(docs.length)
+          res.json(docs)
+        })
+        .catch(err => {
+          console.error(err)
+          res.json({ msg: "server is down" })
+        })
+    } else if (+req.query.count && +req.query.after) {
         try {
             var after = +req.query.after; //extract number from string
             var count = +req.query.count; //extract number form string
