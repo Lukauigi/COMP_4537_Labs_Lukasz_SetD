@@ -117,11 +117,45 @@ app.listen(process.env.PORT || port, async () => {
                         }
                     })
                 })
+
+                res.json('retrieved database and merged if necessary')
             })
         } catch (error) {
             console.log('could not get pokemon type data');
         }
       })
+  }
+
+  const getAPokemon = async (pokemonId) => {
+    https.get(pokemonJsonUrl, (res) => {
+        res.on("end", async function (data) {
+            const response = await JSON.parse(chunks)
+            console.log(Object.keys(response).length);
+            console.log('got pokemon data');
+            console.log(response[2].base['Sp. Attack']);
+
+            response.forEach(element => {
+                if (element.id === pokemonId) {
+                    console.log(element);
+                    pokemonModel.updateOne({ id: element.id}, {
+                        "name": element.name,
+                        "type": element.type,
+                        "base": {
+                            "HP": element.base['HP'],
+                            "Attack": element.base['Attack'],
+                            "Defense": element.base['Defense'],
+                            "Speed": element.base['Speed'],
+                            "Special Attack": element.base['Sp. Attack'],
+                            "Special Defense": element.base['Sp. Defense']
+                        },
+                        "id": element.id
+                    })
+                }
+            })
+
+            res.json('retrieved database and merged if necessary')
+        })
+    })
   }
 
 app.use(express.json())
@@ -132,19 +166,10 @@ app.get('/api/v1/pokemons', async (req, res) => {
     console.log(req.query.count);
 
     if (req.query.count === undefined || req.query.after === undefined) {
-        // pokemonModel.find({})
-        // .then(docs => {
-        //   console.log(docs.length)
-        //   res.json(docs)
-        // })
-        // .catch(err => {
-        //   console.error(err)
-        //   res.json({ msg: "server is down" })
-        // })
 
-        await populateDatabase();
+        //await populateDatabase();
 
-        res.json('updated local database')
+        res.json(populateDatabase)
 
         
     } else if (Number.isInteger(+req.query.count) && Number.isInteger(+req.query.after)) {
@@ -193,14 +218,62 @@ app.post('/api/v1/pokemon', (req, res) => {
 })
 
 // get a pokemon
-app.get('/api/v1/pokemon/:id', (req, res) => {
-    pokemonModel.findOne({ id: req.params.id }).then(document => {
-        if (document == null) res.json({errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809'})
-        else res.json(document)
-    }).catch(error => {
-        console.error(error)
-        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
+app.get('/api/v1/pokemon/:id', async (req, res) => {
+    // pokemonModel.findOne({ id: req.params.id }).then(document => {
+    //     if (document == null) res.json({errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809'})
+    //     else res.json(document)
+    // }).catch(error => {
+    //     console.error(error)
+    //     res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
+    // })
+
+    const pokemonId = req.params.id
+    var retrievedDoc = {}
+
+    console.log(pokemonId);
+
+    https.get(pokemonJsonUrl, async (res) => {
+        var chunks = ""; // all chunks of pokemon data, init to empty
+        res.on("data", async function (chunk) {
+            chunks += chunk; // append each data chunk to chunks container
+        })
+
+        res.on("end", async function (data) {
+            const response = await JSON.parse(chunks)
+            console.log('got pokemon data');
+
+            for (let i = 0; i < response.length; i++) {
+                console.log(response[i].id);
+                if (response[i].id == pokemonId) {
+                    console.log(response[i]);
+                    await pokemonModel.updateOne({ id: response[i].id }, {
+                        "name": response[i].name,
+                        "type": response[i].type,
+                        "base": {
+                            "HP": response[i].base['HP'],
+                            "Attack": response[i].base['Attack'],
+                            "Defense": response[i].base['Defense'],
+                            "Speed": response[i].base['Speed'],
+                            "Special Attack": response[i].base['Sp. Attack'],
+                            "Special Defense": response[i].base['Sp. Defense']
+                        },
+                        "id": response[i].id
+                    }, {upsert: true, returnOriginal: false}).then(doc => {
+                        console.log(doc);
+                        retrievedDoc = doc
+                        // res.json(doc);
+                        // res.send('l')
+                    }).catch(err => {
+                        // res.json({ errMsg: "error"})
+                    })
+                    console.log('break');
+                    break;
+                }
+            }
+        })
     })
+
+    res.json(retrievedDoc)
 })
 
 // get a pokemon Image URL
