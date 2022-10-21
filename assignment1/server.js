@@ -129,8 +129,6 @@ app.get('/api/v1/pokemons', (req, res) => {
     console.log(req.query);
     console.log(req.query.count);
 
-    
-
     if (req.query.count === undefined || req.query.after === undefined) {
         pokemonModel.find({})
         .then(docs => {
