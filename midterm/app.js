@@ -47,11 +47,12 @@ const pokemonModel = mongoose.model('pokemon', initiatizePokemonSchema());
 app.listen(process.env.PORT || port, async () => {
     try {
       // connect to database
-      await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
+      //await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
       //await mongoose.connection.db.dropDatabase() //drop previous collection records
+      mongoose.connect('mongodb://localhost:27017/test')
 
       // populate the database with pokemon
-      await populateDatabase();
+      // await populateDatabase();
 
     } catch (error) {
       console.log('db error');
@@ -95,7 +96,8 @@ app.listen(process.env.PORT || port, async () => {
                 response.map(element => {
                     // https://stackoverflow.com/questions/10333540/mongo-dot-notation-ambiguity
                     // I have to manually fill fields or Sp. Attack & Sp. Defense will be a object called Sp with attack & defense fields, which is not the intended design of the model.
-                    pokemonModel.create({
+                    console.log(element);
+                    pokemonModel.updateMany({ id: element.id}, {
                         "name": element.name,
                         "type": element.type,
                         "base": {
@@ -107,7 +109,7 @@ app.listen(process.env.PORT || port, async () => {
                             "Special Defense": element.base['Sp. Defense']
                         },
                         "id": element.id
-                    }, function (error) {
+                    }, {upsert: true}, function (error) {
                         if (error) {
                             //console.log(`could not create pokemon with id: ${element.id} in db`);
                             //console.log(error);
@@ -125,20 +127,26 @@ app.listen(process.env.PORT || port, async () => {
 app.use(express.json())
 
 // get all pokemons or within a range
-app.get('/api/v1/pokemons', (req, res) => {
+app.get('/api/v1/pokemons', async (req, res) => {
     console.log(req.query);
     console.log(req.query.count);
 
     if (req.query.count === undefined || req.query.after === undefined) {
-        pokemonModel.find({})
-        .then(docs => {
-          console.log(docs.length)
-          res.json(docs)
-        })
-        .catch(err => {
-          console.error(err)
-          res.json({ msg: "server is down" })
-        })
+        // pokemonModel.find({})
+        // .then(docs => {
+        //   console.log(docs.length)
+        //   res.json(docs)
+        // })
+        // .catch(err => {
+        //   console.error(err)
+        //   res.json({ msg: "server is down" })
+        // })
+
+        await populateDatabase();
+
+        res.json('updated local database')
+
+        
     } else if (Number.isInteger(+req.query.count) && Number.isInteger(+req.query.after)) {
         try {
             let after = +req.query.after; //extract number from string
