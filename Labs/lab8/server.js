@@ -304,23 +304,33 @@ app.put('/api/v1/pokemon/:id', async (req, res) => {
 })
 
 // patch a pokemon document or a portion of the pokemon document
-app.patch('/api/v1/pokemon/:id', (req, res) => {
-    pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
-        "base" : {
-            "HP": req.body.base['HP'],
-            "Attack": req.body.base['Attack'],
-            "Defense": req.body.base['Defense'],
-            "Speed": req.body.base['Speed'],
-            "Special Attack": req.body.base['Special Attack'],
-            "Special Defense": req.body.base['Special Defense']
-        }
-     }, { returnOriginal: false } ).then(document => {
-        if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
-        res.json({ msg: "Updated Successfully", pokeInfo: document })
-    }).catch(error => {
-        console.error(error)
-        res.json()
-    })
+app.patch('/api/v1/pokemon/:id', async (req, res) => {
+    const selection = { id: req.params.id }
+    const updateInfo = req.body
+    const options = {
+        new: true
+    }
+
+    const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
+    if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
+    else throw new PokemonNotFoundError('');
+
+    // pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
+    //     "base" : {
+    //         "HP": req.body.base['HP'],
+    //         "Attack": req.body.base['Attack'],
+    //         "Defense": req.body.base['Defense'],
+    //         "Speed": req.body.base['Speed'],
+    //         "Special Attack": req.body.base['Special Attack'],
+    //         "Special Defense": req.body.base['Special Defense']
+    //     }
+    //  }, { returnOriginal: false } ).then(document => {
+    //     if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
+    //     res.json({ msg: "Updated Successfully", pokeInfo: document })
+    // }).catch(error => {
+    //     console.error(error)
+    //     res.json()
+    // })
 })
 
 // delete a pokemon
