@@ -7,7 +7,8 @@ const {
     PokemonBadRequestMissingID,
     PokemonDbError,
     PokemonNotFoundError,
-    PokemonNoRouteError
+    PokemonNoRouteError,
+    PokemonDuplicateError
 } = require('./pokemon-errors.js')
 
 const app = express()
@@ -55,7 +56,7 @@ app.listen(process.env.PORT || port, async () => {
     try {
       // connect to database
       await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
-      //await mongoose.connection.db.dropDatabase() //drop previous collection records
+      await mongoose.connection.db.dropDatabase() //drop previous collection records
 
       // populate the database with pokemon
       await populateDatabase();
@@ -144,7 +145,8 @@ app.get('/api/v1/pokemons', (req, res) => {
         })
         .catch(err => {
           console.error(err)
-          res.json({ msg: "server is down" })
+        //   res.json({ msg: "server is down" })
+            throw new PokemonBadRequest('');
         })
     } else if (Number.isInteger(+req.query.count) && Number.isInteger(+req.query.after)) {
         try {
@@ -160,46 +162,70 @@ app.get('/api/v1/pokemons', (req, res) => {
                 res.send(JSON.stringify(records, null, '\t'))
             }).catch(err => {
                 console.log(err);
+                throw new PokemonBadRequest('');
             })
         } catch (error) {
-            res.json({ errMsg: 'error querying pokemon'} )
+            throw new PokemonBadRequest('');
+            //res.json({ errMsg: 'error querying pokemon'} )
         }    
     } else {
-        res.json({ errMsg: 'enter query params for count & after as numbers'});
+        throw new PokemonBadRequest('');
+        //res.json({ errMsg: 'enter query params for count & after as numbers'});
     }
 })
 
 // create a new pokemon
-app.post('/api/v1/pokemon', (req, res) => {
-    console.log(`find me: ${Object.keys(req)}`);
-    pokemonModel.create({
-        "name": req.body.name,
-        "type": req.body.type,
-        "base": {
-            "HP": req.body.base['HP'],
-            "Attack": req.body.base['Attack'],
-            "Defense": req.body.base['Defense'],
-            "Speed": req.body.base['Speed'],
-            "Special Attack": req.body.base['Special Attack'],
-            "Special Defense": req.body.base['Special Defense']
-        },
-        "id": req.body.id
-    }).then(
-        res.json({ msg: "Added Successfully"})
-    ).catch( error => {
-        console.log(error);
-    })
+app.post('/api/v1/pokemon', async (req, res) => {
+    if (!req.body.id) throw new PokemonBadRequestMissingID('');
+    
+    const selection = { id: req.body.id }
+    const pokemon = await pokemonModel.find(selection)
+    if (pokemon.length != 0) throw new PokemonDuplicateError('');
+    
+    const record = await pokemonModel.create(req.body)
+    res.json({ msg: "Added Successfully"})
+
+    // console.log(`find me: ${Object.keys(req)}`);
+    // pokemonModel.create({
+    //     "name": req.body.name,
+    //     "type": req.body.type,
+    //     "base": {
+    //         "HP": req.body.base['HP'],
+    //         "Attack": req.body.base['Attack'],
+    //         "Defense": req.body.base['Defense'],
+    //         "Speed": req.body.base['Speed'],
+    //         "Special Attack": req.body.base['Special Attack'],
+    //         "Special Defense": req.body.base['Special Defense']
+    //     },
+    //     "id": req.body.id
+    // }).then(
+    //     res.json({ msg: "Added Successfully"})
+    // ).catch( error => {
+    //     console.log(error);
+    // })
 })
 
 // get a pokemon
-app.get('/api/v1/pokemon/:id', (req, res) => {
-    pokemonModel.findOne({ id: req.params.id }).then(document => {
-        if (document == null) res.json({errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809'})
-        else res.json(document)
-    }).catch(error => {
-        console.error(error)
-        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
-    })
+app.get('/api/v1/pokemon/:id', async (req, res) => {
+    const pokemonQuery = { id: req.params.id }
+
+    const record = await pokemonModel.findOne(pokemonQuery)
+
+    if (record) {
+        res.json(record)
+    } else {
+        //res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
+        throw new PokemonNotFoundError('');
+    }
+
+    // pokemonModel.findOne({ id: req.params.id }).then(document => {
+    //     if (document == null) res.json({errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809'})
+    //     else res.json(document)
+    // }).catch(error => {
+    //     console.error(error)
+    //     res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
+    //     throw new PokemonNotFoundError('');
+    // })
 })
 
 // get a pokemon Image URL
@@ -242,27 +268,39 @@ app.get('/api/v1/pokemonImage/:id', (req, res) => {
 })
 
 // upsert a whole pokemon document
-app.put('/api/v1/pokemon/:id', (req, res) => {
-    const { ...rest } = req.body
-    pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
-        "name": req.body.name,
-        "type": req.body.type,
-        "base": {
-            "HP": req.body.base['HP'],
-            "Attack": req.body.base['Attack'],
-            "Defense": req.body.base['Defense'],
-            "Speed": req.body.base['Speed'],
-            "Special Attack": req.body.base['Special Attack'],
-            "Special Defense": req.body.base['Special Defense']
-        },
-        "id": req.body.id
-     }, { upsert: true, returnOriginal: false, $set: {...rest}, runValidators: true }).then(document => {
-        if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
-        res.json({ msg: "Updated Successfully", pokeInfo: document })
-    }).catch(error => {
-        console.error(error)
-        res.json({ msg: 'Not found'})
-    })
+app.put('/api/v1/pokemon/:id', async (req, res) => {
+    const selection = { id: req.params.id }
+    const updateInfo = req.body
+    const options = {
+        new: true,
+        //runValidators: true,
+        overwrite: true
+    }
+
+    const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
+    if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
+    else throw new PokemonNotFoundError('');
+
+    // const { ...rest } = req.body
+    // pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
+    //     "name": req.body.name,
+    //     "type": req.body.type,
+    //     "base": {
+    //         "HP": req.body.base['HP'],
+    //         "Attack": req.body.base['Attack'],
+    //         "Defense": req.body.base['Defense'],
+    //         "Speed": req.body.base['Speed'],
+    //         "Special Attack": req.body.base['Special Attack'],
+    //         "Special Defense": req.body.base['Special Defense']
+    //     },
+    //     "id": req.body.id
+    //  }, { upsert: true, returnOriginal: false, $set: {...rest}, runValidators: true }).then(document => {
+    //     if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
+    //     res.json({ msg: "Updated Successfully", pokeInfo: document })
+    // }).catch(error => {
+    //     console.error(error)
+    //     res.json({ msg: 'Not found'})
+    // })
 })
 
 // patch a pokemon document or a portion of the pokemon document
@@ -286,18 +324,25 @@ app.patch('/api/v1/pokemon/:id', (req, res) => {
 })
 
 // delete a pokemon
-app.delete('/api/v1/pokemon/:id', (req, res) => {
-    try {
-        pokemonModel.findOneAndDelete({ id: req.params.id }).then(document => {
-            if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
-            res.json({ msg: "Deleted Successfully", pokeInfo: document })
-        }).catch(error => {
-            console.error(error)
-            res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811'})
-        })
-    } catch (err) {
-        console.log(err);
-    }
+app.delete('/api/v1/pokemon/:id', async (req, res) => {
+    const selection = { id: req.body.id }
+
+    const record = await pokemonModel.findOneAndDelete(selection)
+
+    if (record) res.json({ msg: "Deleted Successfully", pokeInfo: record })
+    else throw new PokemonNotFoundError('');
+
+    // try {
+    //     pokemonModel.findOneAndDelete({ id: req.params.id }).then(document => {
+    //         if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
+    //         res.json({ msg: "Deleted Successfully", pokeInfo: document })
+    //     }).catch(error => {
+    //         console.error(error)
+    //         res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811'})
+    //     })
+    // } catch (err) {
+    //     console.log(err);
+    // }
     
 })
 

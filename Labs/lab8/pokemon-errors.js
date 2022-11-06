@@ -11,7 +11,16 @@ class PokemonBadRequestMissingID extends PokemonBadRequest {
     constructor(message) {
         super(message);
         this.name = 'PokemonBadRequestMissingID';
-        this.message = 'Error: Bad request, no ID.'
+        this.message = 'Error: Bad pokemon request, no ID.'
+        this.pokeErrorCode = 400;
+    }
+}
+
+class PokemonDuplicateError extends PokemonBadRequest {
+    constructor(message) {
+        super(message)
+        this.name = 'PokemonDuplicateError';
+        this.message = 'Error: Bad pokemon request, duplicate pokemon found.';
         this.pokeErrorCode = 400;
     }
 }
@@ -48,5 +57,6 @@ module.exports = {
     PokemonBadRequestMissingID,
     PokemonDbError,
     PokemonNotFoundError,
-    PokemonNoRouteError
+    PokemonNoRouteError,
+    PokemonDuplicateError
 }
