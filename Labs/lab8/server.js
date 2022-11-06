@@ -10,7 +10,7 @@ const {
     PokemonNoRouteError,
     PokemonDuplicateError,
     PokemonBadRequestBadParameters
-} = require('./pokemon-errors.js')
+} = require('./pokemonErrors.js')
 
 const app = express()
 const port = 5000
@@ -156,12 +156,8 @@ app.get('/api/v1/pokemons', async (req, res) => {
         } else {
             throw new PokemonBadRequestBadParameters('');
         }
-    } catch (e) {
-        if (e instanceof PokemonBadRequestBadParameters) {
-            res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809' })
-        } else if (e instanceof PokemonBadRequest) {
-            res.json({ errMsg: 'Something went wrong' })
-        }
+    } catch (error) {
+        res.json({ Error: error.name, ErrorMsg: error.message })
     }
 })
 
@@ -177,11 +173,7 @@ app.post('/api/v1/pokemon', async (req, res) => {
         const record = await pokemonModel.create(req.body)
         res.json({ msg: "Added Successfully", pokemon: record })
     } catch (error) {
-        if (error instanceof PokemonBadRequestMissingID) {
-            res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809' })
-        } else if (error instanceof PokemonDuplicateError) {
-            res.json({ errMsg: 'Cast Error: pokemon id already exists' })
-        }
+        res.json({ Error: error.name, ErrorMsg: error.message })
     } 
 
     // console.log(`find me: ${Object.keys(req)}`);
@@ -267,8 +259,8 @@ app.get('/api/v1/pokemonImage/:id', async (req, res) => {
         } else {
             throw new PokemonBadRequestMissingID('');
         }
-    } catch (PokemonBadRequestMissingID) {
-        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809'})
+    } catch (error) {
+        res.json({ Error: error.name, ErrorMsg: error.message })
     }
 
 
@@ -326,8 +318,8 @@ app.put('/api/v1/pokemon/:id', async (req, res) => {
         const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
         if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
         else throw new PokemonNotFoundError('');
-    } catch (PokemonNotFoundError) {
-        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809'})
+    } catch (error) {
+        res.json({ Error: error.name, ErrorMsg: error.message })
     }
     
 
@@ -366,8 +358,8 @@ app.patch('/api/v1/pokemon/:id', async (req, res) => {
         const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
         if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
         else throw new PokemonNotFoundError('');
-    } catch (PokemonNotFoundError) {
-        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809'})
+    } catch (error) {
+        res.json({ Error: error.name, ErrorMsg: error.message })
     }
     
 
@@ -399,8 +391,8 @@ app.delete('/api/v1/pokemon/:id', async (req, res) => {
 
         if (record) res.json({ msg: "Deleted Successfully", pokeInfo: record })
         else throw new PokemonNotFoundError('');
-    } catch (PokemonNotFoundError) {
-        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809'})
+    } catch (error) {
+        res.json({ Error: error.name, ErrorMsg: error.message })
     }
     
 
