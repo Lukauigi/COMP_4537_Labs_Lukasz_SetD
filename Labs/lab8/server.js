@@ -24,7 +24,7 @@ var pokemonTypes = [];
   const initiatizePokemonSchema = () => {
     var pokemonSchema = new Schema({
         "name": {
-            "english": { type: String, max: 20 },
+            "english": { type: String, required: true, maxlength: 20 },
             "japanese": String,
             "chinese": String,
             "french": String
@@ -43,7 +43,7 @@ var pokemonTypes = [];
         },
         "id": { 
             type: Number, 
-            unique: true
+            unique: [true, "Cannot have 2 pokemons with the same ID"]
         }
       })
 
@@ -136,6 +136,8 @@ app.use(express.json())
 app.get('/api/v1/pokemons', (req, res) => {
     console.log(req.query);
     console.log(req.query.count);
+
+
 
     if (req.query.count === undefined || req.query.after === undefined) {
         pokemonModel.find({})
