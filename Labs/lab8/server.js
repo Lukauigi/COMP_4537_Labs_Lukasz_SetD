@@ -56,7 +56,7 @@ app.listen(process.env.PORT || port, async () => {
     try {
       // connect to database
       await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
-      await mongoose.connection.db.dropDatabase() //drop previous collection records
+      //await mongoose.connection.db.dropDatabase() //drop previous collection records
 
       // populate the database with pokemon
       await populateDatabase();
@@ -229,9 +229,12 @@ app.get('/api/v1/pokemon/:id', async (req, res) => {
 })
 
 // get a pokemon Image URL
-app.get('/api/v1/pokemonImage/:id', (req, res) => {
-    pokemonModel.findOne({ id: req.params.id }).then(document => {
-        let idNumber = document.id.toString();
+app.get('/api/v1/pokemonImage/:id', async (req, res) => {
+    const selection = { id: req.params.id }
+
+    record = await pokemonModel.findOne(selection)
+    if (record) {
+        const idNumber = record.id.toString();
         let imageFileName = '.png'
 
         // determines if and how much 0s need to be prepend to the image's filename
@@ -261,10 +264,48 @@ app.get('/api/v1/pokemonImage/:id', (req, res) => {
                 res.send(response.body)
             }
         })
-    }).catch(error => {
-        console.error(error)
-        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
-    })
+    } else {
+        throw new PokemonBadRequestMissingID('');
+    }
+
+
+    // pokemonModel.findOne({ id: req.params.id }).then(document => {
+    //     const idNumber = document.id.toString();
+    //     const imageFileName = '.png'
+
+    //     // determines if and how much 0s need to be prepend to the image's filename
+    //     switch (idNumber.length) {
+    //         case 1:
+    //             imageFileName = '00' + idNumber + imageFileName
+    //             break;
+    //         case 2:
+    //             imageFileName = '0' + idNumber + imageFileName
+    //             break;
+    //         case 3:
+    //             imageFileName = idNumber + imageFileName
+    //             break;
+
+            
+    //     }
+
+    //     console.log(pokemonImagesBaseUrl + imageFileName);
+
+    //     // credit: https://stackoverflow.com/questions/60754335/how-do-i-send-image-data-from-a-url-using-express
+    //     //      user: Fadil Natakusumah
+    //     request({
+    //         url: pokemonImagesBaseUrl + imageFileName,
+    //         encoding: null
+    //     },
+    //     (error, response, buffer) => {
+    //         if (!error && response.statusCode === 200) {
+    //             res.set('Content-Type', 'image/png')
+    //             res.send(response.body)
+    //         }
+    //     })
+    // }).catch(error => {
+    //     console.error(error)
+    //     res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
+    // })
 })
 
 // upsert a whole pokemon document
