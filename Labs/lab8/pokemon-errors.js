@@ -1,5 +1,3 @@
-const { extname } = require("path");
-
 class PokemonBadRequest extends Error {
     constructor(message) {
         super(message);
@@ -33,6 +31,14 @@ class PokemonNotFoundError extends Error {
         this.name = 'PokemonNotFoundError';
         this.message = 'PokemonNotFoundError: Pokemon was not found, check your request';
         this.pokeErrorCode = 400;
+    }
+}
+
+class PokemonNoRouteError extends PokemonBadRequest {
+    constructor(message) {
+        super(message);
+        this.name = 'PokemonNoRouteError';
+        this.message = 'PokemonNoRouteError: Improper route.'
     }
 }
 
