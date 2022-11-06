@@ -16,6 +16,14 @@ class PokemonBadRequestMissingID extends PokemonBadRequest {
     }
 }
 
+class PokemonBadRequestBadParameters extends PokemonBadRequest {
+    constructor(message) {
+        super(message)
+        this.name = 'PokemonBadRequestBadParameters'
+        this.message = "Error: Bad pokemon request, parameters are not appropriate; check them."
+    }
+}
+
 class PokemonDuplicateError extends PokemonBadRequest {
     constructor(message) {
         super(message)
@@ -58,5 +66,6 @@ module.exports = {
     PokemonDbError,
     PokemonNotFoundError,
     PokemonNoRouteError,
-    PokemonDuplicateError
+    PokemonDuplicateError,
+    PokemonBadRequestBadParameters
 }

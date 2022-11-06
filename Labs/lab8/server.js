@@ -8,7 +8,8 @@ const {
     PokemonDbError,
     PokemonNotFoundError,
     PokemonNoRouteError,
-    PokemonDuplicateError
+    PokemonDuplicateError,
+    PokemonBadRequestBadParameters
 } = require('./pokemon-errors.js')
 
 const app = express()
@@ -133,46 +134,34 @@ app.listen(process.env.PORT || port, async () => {
 app.use(express.json())
 
 // get all pokemons or within a range
-app.get('/api/v1/pokemons', (req, res) => {
-    console.log(req.query);
-    console.log(req.query.count);
+app.get('/api/v1/pokemons', async (req, res) => {
+    try {
+        if (req.query.count === undefined || req.query.after === undefined) {
+            const records = await pokemonModel.find({})
+            if (records.length > 0) res.json(records)
+            else throw new PokemonDbError('');
+        } else if (Number.isInteger(+req.query.count) && Number.isInteger(+req.query.after)) {
+            const after = +req.query.after; //extract number from string
+            const count = +req.query.count; //extract number form string
+            const selection = { //get pokemon between query params 
+                id: {
+                    $gt : after, 
+                    $lte : (count+after)
+                } 
+            }
 
-
-
-    if (req.query.count === undefined || req.query.after === undefined) {
-        pokemonModel.find({})
-        .then(docs => {
-          console.log(docs.length)
-          res.json(docs)
-        })
-        .catch(err => {
-          console.error(err)
-        //   res.json({ msg: "server is down" })
-            throw new PokemonBadRequest('');
-        })
-    } else if (Number.isInteger(+req.query.count) && Number.isInteger(+req.query.after)) {
-        try {
-            let after = +req.query.after; //extract number from string
-            let count = +req.query.count; //extract number form string
-            console.log(after);
-
-            pokemonModel.find({ 
-                id: {$gt : after, $lte : (count+after)} //get pokemon between query params 
-            }).then(records => {
-                console.log("records length: " + records.length);
-                records.forEach(index => console.log(index.id));
-                res.send(JSON.stringify(records, null, '\t'))
-            }).catch(err => {
-                console.log(err);
-                throw new PokemonBadRequest('');
-            })
-        } catch (error) {
-            throw new PokemonBadRequest('');
-            //res.json({ errMsg: 'error querying pokemon'} )
-        }    
-    } else {
-        throw new PokemonBadRequest('');
-        //res.json({ errMsg: 'enter query params for count & after as numbers'});
+            const records = await pokemonModel.find(selection)
+            if (records.length > 0) res.json(records)
+            else throw new PokemonBadRequest('');
+        } else {
+            throw new PokemonBadRequestBadParameters('');
+        }
+    } catch (e) {
+        if (e instanceof PokemonBadRequestBadParameters) {
+            res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809' })
+        } else if (e instanceof PokemonBadRequest) {
+            res.json({ errMsg: 'Something went wrong' })
+        }
     }
 })
 
