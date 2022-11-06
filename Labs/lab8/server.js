@@ -2,6 +2,13 @@ const express = require('express')
 const mongoose = require('mongoose')
 const https = require('https')
 const request = require('request')
+const {
+    PokemonBadRequest,
+    PokemonBadRequestMissingID,
+    PokemonDbError,
+    PokemonNotFoundError,
+    PokemonNoRouteError
+} = require('./pokemon-errors.js')
 
 const app = express()
 const port = 5000
@@ -300,6 +307,7 @@ app.get('/api/doc', (req, res) => {
 })
 
 // handle import route
-app.get('*', function(req, res) {
-    res.json({ msg: 'Improper route. Check API docs plz.' })
+app.get('*', (req, res) => {
+    //res.json({ msg: 'Improper route. Check API docs plz.' })
+    throw new PokemonNoRouteError('');
 })

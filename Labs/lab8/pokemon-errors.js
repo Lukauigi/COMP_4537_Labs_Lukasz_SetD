@@ -39,6 +39,7 @@ class PokemonNoRouteError extends PokemonBadRequest {
         super(message);
         this.name = 'PokemonNoRouteError';
         this.message = 'PokemonNoRouteError: Improper route.'
+        this.pokeErrorCode = '404'
     }
 }
 
@@ -46,5 +47,6 @@ module.exports = {
     PokemonBadRequest,
     PokemonBadRequestMissingID,
     PokemonDbError,
-    PokemonNotFoundError
+    PokemonNotFoundError,
+    PokemonNoRouteError
 }
