@@ -56,7 +56,7 @@ app.listen(process.env.PORT || port, async () => {
     try {
       // connect to database
       await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
-      //await mongoose.connection.db.dropDatabase() //drop previous collection records
+      await mongoose.connection.db.dropDatabase() //drop previous collection records
 
       // populate the database with pokemon
       await populateDatabase();
@@ -376,12 +376,18 @@ app.patch('/api/v1/pokemon/:id', async (req, res) => {
 
 // delete a pokemon
 app.delete('/api/v1/pokemon/:id', async (req, res) => {
-    const selection = { id: req.body.id }
+    try {
+        const selection = { id: req.params.id }
+        const record = await pokemonModel.findOneAndDelete(selection)
 
-    const record = await pokemonModel.findOneAndDelete(selection)
+        console.log(record);
 
-    if (record) res.json({ msg: "Deleted Successfully", pokeInfo: record })
-    else throw new PokemonNotFoundError('');
+        if (record) res.json({ msg: "Deleted Successfully", pokeInfo: record })
+        else throw new PokemonNotFoundError('');
+    } catch (PokemonNotFoundError) {
+        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809'})
+    }
+    
 
     // try {
     //     pokemonModel.findOneAndDelete({ id: req.params.id }).then(document => {
