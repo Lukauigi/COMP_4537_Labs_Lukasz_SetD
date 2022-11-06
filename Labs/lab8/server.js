@@ -176,14 +176,22 @@ app.get('/api/v1/pokemons', (req, res) => {
 
 // create a new pokemon
 app.post('/api/v1/pokemon', async (req, res) => {
-    if (!req.body.id) throw new PokemonBadRequestMissingID('');
+    try {
+        if (!req.body.id) throw new PokemonBadRequestMissingID('');
     
-    const selection = { id: req.body.id }
-    const pokemon = await pokemonModel.find(selection)
-    if (pokemon.length != 0) throw new PokemonDuplicateError('');
-    
-    const record = await pokemonModel.create(req.body)
-    res.json({ msg: "Added Successfully"})
+        const selection = { id: req.body.id }
+        const pokemon = await pokemonModel.find(selection)
+        if (pokemon.length != 0) throw new PokemonDuplicateError('');
+        
+        const record = await pokemonModel.create(req.body)
+        res.json({ msg: "Added Successfully", pokemon: record })
+    } catch (error) {
+        if (error instanceof PokemonBadRequestMissingID) {
+            res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809' })
+        } else if (error instanceof PokemonDuplicateError) {
+            res.json({ errMsg: 'Cast Error: pokemon id already exists' })
+        }
+    } 
 
     // console.log(`find me: ${Object.keys(req)}`);
     // pokemonModel.create({
@@ -230,43 +238,48 @@ app.get('/api/v1/pokemon/:id', async (req, res) => {
 
 // get a pokemon Image URL
 app.get('/api/v1/pokemonImage/:id', async (req, res) => {
-    const selection = { id: req.params.id }
+    try {
+        const selection = { id: req.params.id }
 
-    record = await pokemonModel.findOne(selection)
-    if (record) {
-        const idNumber = record.id.toString();
-        let imageFileName = '.png'
-
-        // determines if and how much 0s need to be prepend to the image's filename
-        switch (idNumber.length) {
-            case 1:
-                imageFileName = '00' + idNumber + imageFileName
-                break;
-            case 2:
-                imageFileName = '0' + idNumber + imageFileName
-                break;
-            case 3:
-                imageFileName = idNumber + imageFileName
-                break;
-        }
-
-        console.log(pokemonImagesBaseUrl + imageFileName);
-
-        // credit: https://stackoverflow.com/questions/60754335/how-do-i-send-image-data-from-a-url-using-express
-        //      user: Fadil Natakusumah
-        request({
-            url: pokemonImagesBaseUrl + imageFileName,
-            encoding: null
-        },
-        (error, response, buffer) => {
-            if (!error && response.statusCode === 200) {
-                res.set('Content-Type', 'image/png')
-                res.send(response.body)
+        record = await pokemonModel.findOne(selection)
+        if (record) {
+            const idNumber = record.id.toString();
+            let imageFileName = '.png'
+    
+            // determines if and how much 0s need to be prepend to the image's filename
+            switch (idNumber.length) {
+                case 1:
+                    imageFileName = '00' + idNumber + imageFileName
+                    break;
+                case 2:
+                    imageFileName = '0' + idNumber + imageFileName
+                    break;
+                case 3:
+                    imageFileName = idNumber + imageFileName
+                    break;
             }
-        })
-    } else {
-        throw new PokemonBadRequestMissingID('');
+    
+            console.log(pokemonImagesBaseUrl + imageFileName);
+    
+            // credit: https://stackoverflow.com/questions/60754335/how-do-i-send-image-data-from-a-url-using-express
+            //      user: Fadil Natakusumah
+            request({
+                url: pokemonImagesBaseUrl + imageFileName,
+                encoding: null
+            },
+            (error, response, buffer) => {
+                if (!error && response.statusCode === 200) {
+                    res.set('Content-Type', 'image/png')
+                    res.send(response.body)
+                }
+            })
+        } else {
+            throw new PokemonBadRequestMissingID('');
+        }
+    } catch (PokemonBadRequestMissingID) {
+        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809'})
     }
+
 
 
     // pokemonModel.findOne({ id: req.params.id }).then(document => {
@@ -310,17 +323,22 @@ app.get('/api/v1/pokemonImage/:id', async (req, res) => {
 
 // upsert a whole pokemon document
 app.put('/api/v1/pokemon/:id', async (req, res) => {
-    const selection = { id: req.params.id }
-    const updateInfo = req.body
-    const options = {
-        new: true,
-        //runValidators: true,
-        overwrite: true
-    }
+    try {
+        const selection = { id: req.params.id }
+        const updateInfo = req.body
+        const options = {
+            new: true,
+            runValidators: true,
+            overwrite: true
+        }
 
-    const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
-    if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
-    else throw new PokemonNotFoundError('');
+        const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
+        if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
+        else throw new PokemonNotFoundError('');
+    } catch (PokemonNotFoundError) {
+        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809'})
+    }
+    
 
     // const { ...rest } = req.body
     // pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
@@ -346,15 +364,21 @@ app.put('/api/v1/pokemon/:id', async (req, res) => {
 
 // patch a pokemon document or a portion of the pokemon document
 app.patch('/api/v1/pokemon/:id', async (req, res) => {
-    const selection = { id: req.params.id }
-    const updateInfo = req.body
-    const options = {
-        new: true
-    }
+    try {
+        const selection = { id: req.params.id }
+        const updateInfo = req.body
+        const options = {
+            new: true,
+            runValidators: true
+        }
 
-    const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
-    if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
-    else throw new PokemonNotFoundError('');
+        const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
+        if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
+        else throw new PokemonNotFoundError('');
+    } catch (PokemonNotFoundError) {
+        res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 809'})
+    }
+    
 
     // pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
     //     "base" : {
