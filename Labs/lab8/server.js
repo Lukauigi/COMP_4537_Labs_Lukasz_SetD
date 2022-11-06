@@ -404,6 +404,10 @@ app.get('/api/doc', (req, res) => {
 
 // handle import route
 app.get('*', (req, res) => {
-    //res.json({ msg: 'Improper route. Check API docs plz.' })
-    throw new PokemonNoRouteError('');
+    try {
+        throw new PokemonNoRouteError('');
+    } catch (PokemonNoRouteError) {
+        res.json({ msg: 'Improper route. Check API docs plz.' })
+    }
+    
 })
