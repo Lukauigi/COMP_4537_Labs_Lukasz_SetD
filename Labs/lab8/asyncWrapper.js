@@ -3,6 +3,8 @@ const asyncWrapper = (fn) => {
       try {
         await fn(req, res, next)
       } catch (error) {
+        if (error.pokeErrorCode) res.status(error.pokeErrorCode)
+        res.status(500)
         next(res.json({ Error: error.name, ErrorMsg: error.message }))
       }
     }

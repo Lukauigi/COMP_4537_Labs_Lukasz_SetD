@@ -21,6 +21,7 @@ class PokemonBadRequestBadParameters extends PokemonBadRequest {
         super(message)
         this.name = 'PokemonBadRequestBadParameters'
         this.message = "Error: Bad pokemon request, parameters are not appropriate; check them."
+        this.pokeErrorCode = 400;
     }
 }
 
