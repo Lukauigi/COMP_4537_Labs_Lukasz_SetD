@@ -55,20 +55,14 @@ var pokemonTypes = [];
 
 const pokemonModel = mongoose.model('pokemon', initiatizePokemonSchema());
 
-app.listen(process.env.PORT || port, async () => {
-    try {
-      // connect to database
-      await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
-      await mongoose.connection.db.dropDatabase() //drop previous collection records
-
-      // populate the database with pokemon
-      await populateDatabase();
-
-    } catch (error) {
-      console.log('db error');
-    }
-    
-  })
+app.listen(process.env.PORT || port, asyncWrapper(async (error) => {
+    if (error) throw new PokemonDbError('');
+    else {
+        await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
+        await mongoose.connection.db.dropDatabase() //drop previous collection records
+        await populateDatabase();
+    }    
+  }))
 
   // Get all pokemon types and insert them into an enum
   https.get(pokemonTypesJsonUrl, async (res) => {
