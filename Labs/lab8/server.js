@@ -12,6 +12,8 @@ const {
     PokemonBadRequestBadParameters
 } = require('./pokemonErrors.js')
 
+const { asyncWrapper } = require('./asyncWrapper.js')
+
 const app = express()
 const port = 5000
 const { Schema } = mongoose;
@@ -134,8 +136,8 @@ app.listen(process.env.PORT || port, async () => {
 app.use(express.json())
 
 // get all pokemons or within a range
-app.get('/api/v1/pokemons', async (req, res) => {
-    try {
+app.get('/api/v1/pokemons', asyncWrapper(async (req, res) => {
+    // try {
         if (req.query.count === undefined || req.query.after === undefined) {
             const records = await pokemonModel.find({})
             if (records.length > 0) res.json(records)
@@ -156,14 +158,14 @@ app.get('/api/v1/pokemons', async (req, res) => {
         } else {
             throw new PokemonBadRequestBadParameters('');
         }
-    } catch (error) {
-        res.json({ Error: error.name, ErrorMsg: error.message })
-    }
-})
+    // } catch (error) {
+    //     res.json({ Error: error.name, ErrorMsg: error.message })
+    // }
+}))
 
 // create a new pokemon
-app.post('/api/v1/pokemon', async (req, res) => {
-    try {
+app.post('/api/v1/pokemon', asyncWrapper(async (req, res) => {
+    // try {
         if (!req.body.id) throw new PokemonBadRequestMissingID('');
     
         const selection = { id: req.body.id }
@@ -172,56 +174,24 @@ app.post('/api/v1/pokemon', async (req, res) => {
         
         const record = await pokemonModel.create(req.body)
         res.json({ msg: "Added Successfully", pokemon: record })
-    } catch (error) {
-        res.json({ Error: error.name, ErrorMsg: error.message })
-    } 
-
-    // console.log(`find me: ${Object.keys(req)}`);
-    // pokemonModel.create({
-    //     "name": req.body.name,
-    //     "type": req.body.type,
-    //     "base": {
-    //         "HP": req.body.base['HP'],
-    //         "Attack": req.body.base['Attack'],
-    //         "Defense": req.body.base['Defense'],
-    //         "Speed": req.body.base['Speed'],
-    //         "Special Attack": req.body.base['Special Attack'],
-    //         "Special Defense": req.body.base['Special Defense']
-    //     },
-    //     "id": req.body.id
-    // }).then(
-    //     res.json({ msg: "Added Successfully"})
-    // ).catch( error => {
-    //     console.log(error);
-    // })
-})
+    // } catch (error) {
+    //     res.json({ Error: error.name, ErrorMsg: error.message })
+    // }
+}))
 
 // get a pokemon
-app.get('/api/v1/pokemon/:id', async (req, res) => {
+app.get('/api/v1/pokemon/:id', asyncWrapper(async (req, res) => {
     const pokemonQuery = { id: req.params.id }
 
     const record = await pokemonModel.findOne(pokemonQuery)
 
-    if (record) {
-        res.json(record)
-    } else {
-        //res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
-        throw new PokemonNotFoundError('');
-    }
-
-    // pokemonModel.findOne({ id: req.params.id }).then(document => {
-    //     if (document == null) res.json({errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809'})
-    //     else res.json(document)
-    // }).catch(error => {
-    //     console.error(error)
-    //     res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
-    //     throw new PokemonNotFoundError('');
-    // })
-})
+    if (record) res.json(record) 
+    else throw new PokemonNotFoundError('');
+}))
 
 // get a pokemon Image URL
-app.get('/api/v1/pokemonImage/:id', async (req, res) => {
-    try {
+app.get('/api/v1/pokemonImage/:id', asyncWrapper(async (req, res) => {
+    // try {
         const selection = { id: req.params.id }
 
         record = await pokemonModel.findOne(selection)
@@ -259,54 +229,14 @@ app.get('/api/v1/pokemonImage/:id', async (req, res) => {
         } else {
             throw new PokemonBadRequestMissingID('');
         }
-    } catch (error) {
-        res.json({ Error: error.name, ErrorMsg: error.message })
-    }
-
-
-
-    // pokemonModel.findOne({ id: req.params.id }).then(document => {
-    //     const idNumber = document.id.toString();
-    //     const imageFileName = '.png'
-
-    //     // determines if and how much 0s need to be prepend to the image's filename
-    //     switch (idNumber.length) {
-    //         case 1:
-    //             imageFileName = '00' + idNumber + imageFileName
-    //             break;
-    //         case 2:
-    //             imageFileName = '0' + idNumber + imageFileName
-    //             break;
-    //         case 3:
-    //             imageFileName = idNumber + imageFileName
-    //             break;
-
-            
-    //     }
-
-    //     console.log(pokemonImagesBaseUrl + imageFileName);
-
-    //     // credit: https://stackoverflow.com/questions/60754335/how-do-i-send-image-data-from-a-url-using-express
-    //     //      user: Fadil Natakusumah
-    //     request({
-    //         url: pokemonImagesBaseUrl + imageFileName,
-    //         encoding: null
-    //     },
-    //     (error, response, buffer) => {
-    //         if (!error && response.statusCode === 200) {
-    //             res.set('Content-Type', 'image/png')
-    //             res.send(response.body)
-    //         }
-    //     })
-    // }).catch(error => {
-    //     console.error(error)
-    //     res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811' })
-    // })
-})
+    // } catch (error) {
+    //     res.json({ Error: error.name, ErrorMsg: error.message })
+    // }
+}))
 
 // upsert a whole pokemon document
-app.put('/api/v1/pokemon/:id', async (req, res) => {
-    try {
+app.put('/api/v1/pokemon/:id', asyncWrapper(async (req, res) => {
+    // try {
         const selection = { id: req.params.id }
         const updateInfo = req.body
         const options = {
@@ -318,36 +248,14 @@ app.put('/api/v1/pokemon/:id', async (req, res) => {
         const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
         if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
         else throw new PokemonNotFoundError('');
-    } catch (error) {
-        res.json({ Error: error.name, ErrorMsg: error.message })
-    }
-    
-
-    // const { ...rest } = req.body
-    // pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
-    //     "name": req.body.name,
-    //     "type": req.body.type,
-    //     "base": {
-    //         "HP": req.body.base['HP'],
-    //         "Attack": req.body.base['Attack'],
-    //         "Defense": req.body.base['Defense'],
-    //         "Speed": req.body.base['Speed'],
-    //         "Special Attack": req.body.base['Special Attack'],
-    //         "Special Defense": req.body.base['Special Defense']
-    //     },
-    //     "id": req.body.id
-    //  }, { upsert: true, returnOriginal: false, $set: {...rest}, runValidators: true }).then(document => {
-    //     if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
-    //     res.json({ msg: "Updated Successfully", pokeInfo: document })
-    // }).catch(error => {
-    //     console.error(error)
-    //     res.json({ msg: 'Not found'})
-    // })
-})
+    // } catch (error) {
+    //     res.json({ Error: error.name, ErrorMsg: error.message })
+    // }
+}))
 
 // patch a pokemon document or a portion of the pokemon document
-app.patch('/api/v1/pokemon/:id', async (req, res) => {
-    try {
+app.patch('/api/v1/pokemon/:id', asyncWrapper(async (req, res) => {
+    // try {
         const selection = { id: req.params.id }
         const updateInfo = req.body
         const options = {
@@ -358,32 +266,14 @@ app.patch('/api/v1/pokemon/:id', async (req, res) => {
         const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
         if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
         else throw new PokemonNotFoundError('');
-    } catch (error) {
-        res.json({ Error: error.name, ErrorMsg: error.message })
-    }
-    
-
-    // pokemonModel.findOneAndUpdate({ id: req.params.id }, { 
-    //     "base" : {
-    //         "HP": req.body.base['HP'],
-    //         "Attack": req.body.base['Attack'],
-    //         "Defense": req.body.base['Defense'],
-    //         "Speed": req.body.base['Speed'],
-    //         "Special Attack": req.body.base['Special Attack'],
-    //         "Special Defense": req.body.base['Special Defense']
-    //     }
-    //  }, { returnOriginal: false } ).then(document => {
-    //     if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
-    //     res.json({ msg: "Updated Successfully", pokeInfo: document })
-    // }).catch(error => {
-    //     console.error(error)
-    //     res.json()
-    // })
-})
+    // } catch (error) {
+    //     res.json({ Error: error.name, ErrorMsg: error.message })
+    // }
+}))
 
 // delete a pokemon
-app.delete('/api/v1/pokemon/:id', async (req, res) => {
-    try {
+app.delete('/api/v1/pokemon/:id', asyncWrapper(async (req, res) => {
+    // try {
         const selection = { id: req.params.id }
         const record = await pokemonModel.findOneAndDelete(selection)
 
@@ -391,24 +281,10 @@ app.delete('/api/v1/pokemon/:id', async (req, res) => {
 
         if (record) res.json({ msg: "Deleted Successfully", pokeInfo: record })
         else throw new PokemonNotFoundError('');
-    } catch (error) {
-        res.json({ Error: error.name, ErrorMsg: error.message })
-    }
-    
-
-    // try {
-    //     pokemonModel.findOneAndDelete({ id: req.params.id }).then(document => {
-    //         if (document == null) res.json({ errMsg: 'A pokemon with that id does not exist. Try an integer id between 1 and 809' })
-    //         res.json({ msg: "Deleted Successfully", pokeInfo: document })
-    //     }).catch(error => {
-    //         console.error(error)
-    //         res.json({ errMsg: 'Cast Error: pass pokemon id between 1 and 811'})
-    //     })
-    // } catch (err) {
-    //     console.log(err);
-    // }
-    
-})
+    // } catch (error) {
+    //     res.json({ Error: error.name, ErrorMsg: error.message })
+    // }    
+}))
 
 // app.get('api/doc')
 app.get('/api/doc', (req, res) => {
@@ -416,11 +292,11 @@ app.get('/api/doc', (req, res) => {
 })
 
 // handle import route
-app.get('*', (req, res) => {
-    try {
-        throw new PokemonNoRouteError('');
-    } catch (PokemonNoRouteError) {
-        res.json({ msg: 'Improper route. Check API docs plz.' })
-    }
-    
-})
+app.get('*', asyncWrapper( async (req, res) => {
+    throw new PokemonNoRouteError('');
+    // try {
+    //     throw new PokemonNoRouteError('');
+    // } catch (PokemonNoRouteError) {
+    //     res.json({ msg: 'Improper route. Check API docs plz.' })
+    // }
+}))
