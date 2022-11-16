@@ -11,7 +11,7 @@ const {
     PokemonDuplicateError,
     PokemonBadRequestBadParameters
 } = require('./pokemonErrors.js')
-const pokeUser = require('./pokeUserModel')
+const pokeUserModel = require('./pokeUserModel')
 
 const { asyncWrapper } = require('./asyncWrapper.js')
 
@@ -132,6 +132,20 @@ app.listen(process.env.PORT || port, asyncWrapper(async (error) => {
   }
 
 app.use(express.json())
+
+/* ------------------------------------------ */
+/* ////// CRUD Operations of User Data \\\\\\ */
+/* ------------------------------------------ */
+
+app.post('/api/v1/register', asyncWrapper(async (req, res) => {
+    const { username, password, email } = req.body
+    const user = await pokeUserModel.create({ username, password, email})
+    res.send(user)
+}))
+
+/* ------------------------------------------ */
+/* ///// CRUD Operations of Pokemon Data \\\\ */
+/* ------------------------------------------ */
 
 // get all pokemons or within a range
 app.get('/api/v1/pokemons', asyncWrapper(async (req, res) => {
