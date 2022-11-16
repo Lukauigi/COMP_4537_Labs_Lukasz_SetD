@@ -137,9 +137,15 @@ app.use(express.json())
 /* ////// CRUD Operations of User Data \\\\\\ */
 /* ------------------------------------------ */
 
+const bcrypt = require('bcrypt')
+
 app.post('/api/v1/register', asyncWrapper(async (req, res) => {
     const { username, password, email } = req.body
-    const user = await pokeUserModel.create({ username, password, email})
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    const userWithHashedPassword = { ...req.body, password: hashedPassword }
+
+    const user = await pokeUserModel.create(userWithHashedPassword)
     res.send(user)
 }))
 
