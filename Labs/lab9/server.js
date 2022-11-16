@@ -14,6 +14,9 @@ const {
 
 const { asyncWrapper } = require('./asyncWrapper.js')
 
+const dotenv = require("dotenv")
+dotenv.config();
+
 const app = express()
 const port = 5000
 const { Schema } = mongoose;
@@ -58,7 +61,7 @@ const pokemonModel = mongoose.model('pokemon', initiatizePokemonSchema());
 app.listen(process.env.PORT || port, asyncWrapper(async (error) => {
     if (error) throw new PokemonDbError('');
     else {
-        await mongoose.connect('mongodb+srv://luke:4QC9OhKvqVheWmTf@a1.wcgrq99.mongodb.net/?retryWrites=true&w=majority')
+        await mongoose.connect(process.env.Mongo_Atlas_DB_String)
         await mongoose.connection.db.dropDatabase() //drop previous collection records
         await populateDatabase();
     }    
