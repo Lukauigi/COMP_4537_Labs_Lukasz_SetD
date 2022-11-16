@@ -11,6 +11,7 @@ const {
     PokemonDuplicateError,
     PokemonBadRequestBadParameters
 } = require('./pokemonErrors.js')
+const pokeUser = require('./pokeUserModel')
 
 const { asyncWrapper } = require('./asyncWrapper.js')
 
