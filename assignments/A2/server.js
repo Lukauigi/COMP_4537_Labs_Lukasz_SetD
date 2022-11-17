@@ -151,6 +151,8 @@ app.post('/register', asyncWrapper(async (req, res) => {
 }))
 
 const jwt = require("jsonwebtoken")
+const { update } = require('./pokeUserModel')
+
 app.post('/login', asyncWrapper(async (req, res) => {
   const { username, password } = req.body
   const user = await pokeUserModel.findOne({ username })
@@ -164,7 +166,19 @@ app.post('/login', asyncWrapper(async (req, res) => {
 
   // Create and assign a token
   const token = jwt.sign({ _id: user._id }, `${process.env.TOKEN_SECRET}`)
+  console.log(token);
+  
   res.header('auth-token', token)
+
+  //update user with token
+  const selection = { id: user.id }
+  const updateInfo = { $set: { token: token } }
+  const options = {
+      new: true,
+      runValidators: true,
+      overwrite: true
+  }
+  await pokeUserModel.findOneAndUpdate(selection, updateInfo, options)
 
   res.send(user)
 }))
@@ -173,13 +187,18 @@ app.post('/login', asyncWrapper(async (req, res) => {
 /* ///// CRUD Operations of Pokemon Data \\\\ */
 /* ------------------------------------------ */
 
-const auth = (req, res, next) => {
-    const token = req.header('auth-token')
+const auth = async (req, res, next) => {
+    //const token = req.header('auth-token')
+
+    const token = req.query.token    
     if (!token) {
       throw new PokemonBadRequest("Access denied")
     }
     try {
-      const verified = jwt.verify(token, `${process.env.TOKEN_SECRET}`) // nothing happens if token is valid
+      const record = await pokeUserModel.findOne({ token: token })
+
+      //const verified = jwt.verify(token, `${process.env.TOKEN_SECRET}`) // nothing happens if token is valid
+      const verified = jwt.verify(token, record.token)
       next()
     } catch (err) {
       throw new PokemonBadRequest("Invalid token")
