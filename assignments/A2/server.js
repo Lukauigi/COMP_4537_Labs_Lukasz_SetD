@@ -9,7 +9,12 @@ const {
     PokemonNotFoundError,
     PokemonNoRouteError,
     PokemonDuplicateError,
-    PokemonBadRequestBadParameters
+    PokemonBadRequestBadParameters,
+    PokemonInvalidPasswordError,
+    PokemonNoPokeUserError,
+    PokemonInvalidTokenError,
+    PokemonAccessDeniedError,
+    PokemonAdminAccessDeniedError
 } = require('./pokemonErrors.js')
 const pokeUserModel = require('./pokeUserModel')
 const { handleError } = require('./errorHandler')
@@ -142,39 +147,31 @@ const auth = asyncWrapper(async (req, res, next) => {
 
     const token = req.query.token
     if (!token) {
-      throw new PokemonBadRequest("Access denied")
+      throw new PokemonAccessDeniedError()
     }
     try {
       const record = await pokeUserModel.findOne({ token: token })
 
       //const verified = jwt.verify(token, process.env.TOKEN_SECRET) // nothing happens if token is valid
-    //   console.log('****************************************************');
-    //   console.log(token);
-    //   console.log('****************************************************');
-    //   console.log(record.token);
-    //   console.log('****************************************************');
-    //   console.log(`${process.env.TOKEN_SECRET}`);
-    //   console.log('****************************************************');
-    //   console.log(token===record.token);
       //const verified = jwt.verify(token, record.token)
       if (token===record.token && record.isLoggedIn)
       next()
     } catch (err) {
-      throw new PokemonBadRequest("Invalid token")
+      throw new PokemonInvalidTokenError()
     }
 })
 
 const adminAuth = asyncWrapper(async (req, res, next) => {
     const token = req.query.token
     if (!token) {
-      throw new PokemonBadRequest("Access denied")
+      throw new PokemonAccessDeniedError()
     }
     try {
       const record = await pokeUserModel.findOne({ token: token })
       if (token===record.token && record.isLoggedIn && record.isAdmin) next()
-      else throw new PokemonBadRequest()
+      else throw new PokemonAdminAccessDeniedError()
     } catch (err) {
-      throw new PokemonBadRequest("Invalid token")
+      throw new PokemonInvalidTokenError()
     }
 })
 

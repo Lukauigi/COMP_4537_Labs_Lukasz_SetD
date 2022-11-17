@@ -7,7 +7,12 @@ const {
     PokemonNotFoundError,
     PokemonNoRouteError,
     PokemonDuplicateError,
-    PokemonBadRequestBadParameters
+    PokemonBadRequestBadParameters,
+    PokemonInvalidPasswordError,
+    PokemonNoPokeUserError,
+    PokemonInvalidTokenError,
+    PokemonAccessDeniedError,
+    PokemonAdminAccessDeniedError
 } = require('./pokemonErrors.js')
 const pokeUserModel = require('./pokeUserModel')
 const { handleError } = require('./errorHandler')
@@ -59,11 +64,11 @@ app.post('/login', asyncWrapper(async (req, res) => {
   const { username, password } = req.body
   const user = await pokeUserModel.findOne({ username })
   if (!user) {
-    throw new PokemonBadRequest("User not found")
+    throw new PokemonNoPokeUserError()
   }
   const isPasswordCorrect = await bcrypt.compare(password, user.password)
   if (!isPasswordCorrect) {
-    throw new PokemonBadRequest("Password is incorrect")
+    throw new PokemonInvalidPasswordError()
   }
 
   //update user with token
@@ -83,11 +88,11 @@ app.post('/logout', asyncWrapper(async (req, res) => {
     const { username, password } = req.body
     const user = await pokeUserModel.findOne({ username })
     if (!user) {
-        throw new PokemonBadRequest("User not found")
+        throw new PokemonNoPokeUserError()
     }
     const isPasswordCorrect = await bcrypt.compare(password, user.password)
     if (!isPasswordCorrect) {
-        throw new PokemonBadRequest("Password is incorrect")
+        throw new PokemonInvalidPasswordError()
     }
 
     //update user logged in status

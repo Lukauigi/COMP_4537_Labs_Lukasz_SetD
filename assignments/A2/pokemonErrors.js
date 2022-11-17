@@ -61,6 +61,51 @@ class PokemonNoRouteError extends PokemonBadRequest {
     }
 }
 
+class PokemonNoPokeUserError extends PokemonBadRequest {
+    constructor(message) {
+        super(message);
+        this.name = 'PokemonNoPokeUserError';
+        this.message = 'Error: Bad pokemon request, User does not exist.'
+        this.pokeErrorCode = '400'
+    }
+}
+
+class PokemonInvalidPasswordError extends PokemonBadRequest {
+    constructor(message) {
+        super(message);
+        this.name = 'PokemonInvalidPasswordError';
+        this.message = 'Error: Bad pokemon request, Password does not match record with matching username.'
+        this.pokeErrorCode = '400'
+    }
+}
+
+class PokemonInvalidTokenError extends PokemonBadRequest {
+    constructor(message) {
+        super(message);
+        this.name = 'PokemonInvalidTokenError';
+        this.message = 'Error: Bad pokemon request, Token is invalid.'
+        this.pokeErrorCode = '400'
+    }
+}
+
+class PokemonAccessDeniedError extends PokemonBadRequest {
+    constructor(message) {
+        super(message);
+        this.name = 'PokemonAccessDeniedError';
+        this.message = 'Error: Bad pokemon request, Bad access token.'
+        this.pokeErrorCode = '400'
+    }
+}
+
+class PokemonAdminAccessDeniedError extends PokemonBadRequest {
+    constructor(message) {
+        super(message);
+        this.name = 'PokemonAdminAccessDeniedError';
+        this.message = 'Error: Bad pokemon request, Admin poke users may view these pages.'
+        this.pokeErrorCode = '400'
+    }
+}
+
 module.exports = {
     PokemonBadRequest,
     PokemonBadRequestMissingID,
@@ -68,5 +113,10 @@ module.exports = {
     PokemonNotFoundError,
     PokemonNoRouteError,
     PokemonDuplicateError,
-    PokemonBadRequestBadParameters
+    PokemonBadRequestBadParameters,
+    PokemonInvalidPasswordError,
+    PokemonNoPokeUserError,
+    PokemonInvalidTokenError,
+    PokemonAccessDeniedError,
+    PokemonAdminAccessDeniedError
 }
