@@ -164,6 +164,20 @@ const auth = asyncWrapper(async (req, res, next) => {
     }
 })
 
+const adminAuth = asyncWrapper(async (req, res, next) => {
+    const token = req.query.token
+    if (!token) {
+      throw new PokemonBadRequest("Access denied")
+    }
+    try {
+      const record = await pokeUserModel.findOne({ token: token })
+      if (token===record.token && record.isLoggedIn && record.isAdmin) next()
+      else throw new PokemonBadRequest()
+    } catch (err) {
+      throw new PokemonBadRequest("Invalid token")
+    }
+})
+
 app.use(auth)
 
 // get all pokemons or within a range
@@ -194,6 +208,18 @@ app.get('/api/v1/pokemons', asyncWrapper(async (req, res) => {
     // }
 }))
 
+// get a pokemon
+app.get('/api/v1/pokemon/:id', asyncWrapper(async (req, res) => {
+    const pokemonQuery = { id: req.params.id }
+
+    const record = await pokemonModel.findOne(pokemonQuery)
+
+    if (record) res.json(record) 
+    else throw new PokemonNotFoundError('');
+}))
+
+app.use(adminAuth)
+
 // create a new pokemon
 app.post('/api/v1/pokemon', asyncWrapper(async (req, res) => {
     // try {
@@ -208,16 +234,6 @@ app.post('/api/v1/pokemon', asyncWrapper(async (req, res) => {
     // } catch (error) {
     //     res.json({ Error: error.name, ErrorMsg: error.message })
     // }
-}))
-
-// get a pokemon
-app.get('/api/v1/pokemon/:id', asyncWrapper(async (req, res) => {
-    const pokemonQuery = { id: req.params.id }
-
-    const record = await pokemonModel.findOne(pokemonQuery)
-
-    if (record) res.json(record) 
-    else throw new PokemonNotFoundError('');
 }))
 
 // get a pokemon Image URL

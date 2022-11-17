@@ -46,7 +46,7 @@ app.post('/register', asyncWrapper(async (req, res) => {
 }))
 
 const jwt = require("jsonwebtoken")
-const { update } = require('./pokeUserModel')
+//const { update } = require('./pokeUserModel')
 
 app.post('/login', asyncWrapper(async (req, res) => {
   const { username, password } = req.body
@@ -66,7 +66,7 @@ app.post('/login', asyncWrapper(async (req, res) => {
   res.header('auth-token', token)
 
   //update user with token
-  const selection = { id: user.id }
+  const selection = { username: user.username }
   const updateInfo = { $set: { token: token, isLoggedIn: true } }
   const options = {
       new: true,

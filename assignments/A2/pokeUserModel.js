@@ -35,6 +35,11 @@ const schema = new mongoose.Schema({
     type: Boolean,
     required: true,
     default: false
+  },
+  isAdmin: {
+    type: Boolean,
+    require: true,
+    default: false
   }
 })
 
