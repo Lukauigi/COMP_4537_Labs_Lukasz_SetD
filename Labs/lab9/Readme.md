@@ -1,0 +1,1 @@
+Authentication on Pokemnon CRUD routes only works with manual POST requests with login and register. Most be done with Thunder Client or similar services.
