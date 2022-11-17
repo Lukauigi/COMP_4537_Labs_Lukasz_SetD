@@ -101,7 +101,7 @@ app.post('/logout', asyncWrapper(async (req, res) => {
     const options = {
         new: true,
         runValidators: true,
-        overwrite: true,
+        overwrite: true
     }
     const updatedUser = await pokeUserModel.findOneAndUpdate(selection, updateInfo, options)
 

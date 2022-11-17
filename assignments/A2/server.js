@@ -37,7 +37,7 @@ var pokemonTypes = [];
   const initiatizePokemonSchema = () => {
     var pokemonSchema = new Schema({
         "name": {
-            "english": { type: String, required: true, maxlength: 20 },
+            "english": { type: String, maxlength: 20 },
             "japanese": String,
             "chinese": String,
             "french": String
@@ -142,6 +142,8 @@ app.listen(process.env.POKEMONAPI_PORT, asyncWrapper(async (error) => {
 /* ///// CRUD Operations of Pokemon Data \\\\ */
 /* ------------------------------------------ */
 
+app.use(express.json())
+
 const auth = asyncWrapper(async (req, res, next) => {
     //const token = req.header('auth-token')
 
@@ -183,7 +185,7 @@ app.get('/api/v1/pokemons', asyncWrapper(async (req, res) => {
         if (req.query.count === undefined || req.query.after === undefined) {
             const records = await pokemonModel.find({})
             if (records.length > 0) res.json(records)
-            else throw new PokemonDbError('');
+            else throw new PokemonDbError();
         } else if (Number.isInteger(+req.query.count) && Number.isInteger(+req.query.after)) {
             const after = +req.query.after; //extract number from string
             const count = +req.query.count; //extract number form string
@@ -196,9 +198,9 @@ app.get('/api/v1/pokemons', asyncWrapper(async (req, res) => {
 
             const records = await pokemonModel.find(selection)
             if (records.length > 0) res.json(records)
-            else throw new PokemonBadRequest('');
+            else throw new PokemonBadRequest();
         } else {
-            throw new PokemonBadRequestBadParameters('');
+            throw new PokemonBadRequestBadParameters();
         }
     // } catch (error) {
     //     res.json({ Error: error.name, ErrorMsg: error.message })
@@ -212,7 +214,7 @@ app.get('/api/v1/pokemon/:id', asyncWrapper(async (req, res) => {
     const record = await pokemonModel.findOne(pokemonQuery)
 
     if (record) res.json(record) 
-    else throw new PokemonNotFoundError('');
+    else throw new PokemonNotFoundError();
 }))
 
 app.use(adminAuth)
@@ -220,7 +222,9 @@ app.use(adminAuth)
 // create a new pokemon
 app.post('/api/v1/pokemon', asyncWrapper(async (req, res) => {
     // try {
-        if (!req.body.id) throw new PokemonBadRequestMissingID('');
+        const id = await req.body.id
+        console.log(id);
+        if (!id) throw new PokemonBadRequestMissingID('');
     
         const selection = { id: req.body.id }
         const pokemon = await pokemonModel.find(selection)
@@ -286,9 +290,11 @@ app.put('/api/v1/pokemon/:id', asyncWrapper(async (req, res) => {
         const options = {
             new: true,
             runValidators: true,
-            overwrite: true
+            overwrite: true,
+            upsert: true
         }
 
+        console.log(updateInfo);
         const record = await pokemonModel.findOneAndUpdate(selection, updateInfo, options)
         if (record) res.json({ msg: "Updated Successfully", pokeInfo: record })
         else throw new PokemonNotFoundError('');
