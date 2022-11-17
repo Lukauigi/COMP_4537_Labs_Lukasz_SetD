@@ -79,4 +79,28 @@ app.post('/login', asyncWrapper(async (req, res) => {
   res.send(updatedUser)
 }))
 
+app.post('/logout', asyncWrapper(async (req, res) => {
+    const { username, password } = req.body
+    const user = await pokeUserModel.findOne({ username })
+    if (!user) {
+        throw new PokemonBadRequest("User not found")
+    }
+    const isPasswordCorrect = await bcrypt.compare(password, user.password)
+    if (!isPasswordCorrect) {
+        throw new PokemonBadRequest("Password is incorrect")
+    }
+
+    //update user logged in status
+    const selection = { username: user.username }
+    const updateInfo = { $set: { isLoggedIn: false } }
+    const options = {
+        new: true,
+        runValidators: true,
+        overwrite: true,
+    }
+    const updatedUser = await pokeUserModel.findOneAndUpdate(selection, updateInfo, options)
+
+    res.send(updatedUser)
+}))
+
 app.use(handleError)
