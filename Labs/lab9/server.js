@@ -12,6 +12,7 @@ const {
     PokemonBadRequestBadParameters
 } = require('./pokemonErrors.js')
 const pokeUserModel = require('./pokeUserModel')
+const { handleError } = require('./errorHandler')
 
 const { asyncWrapper } = require('./asyncWrapper.js')
 
@@ -168,12 +169,24 @@ app.post('/login', asyncWrapper(async (req, res) => {
   res.send(user)
 }))
 
-  
-  
-
 /* ------------------------------------------ */
 /* ///// CRUD Operations of Pokemon Data \\\\ */
 /* ------------------------------------------ */
+
+const auth = (req, res, next) => {
+    const token = req.header('auth-token')
+    if (!token) {
+      throw new PokemonBadRequest("Access denied")
+    }
+    try {
+      const verified = jwt.verify(token, `${process.env.TOKEN_SECRET}`) // nothing happens if token is valid
+      next()
+    } catch (err) {
+      throw new PokemonBadRequest("Invalid token")
+    }
+}
+
+app.use(auth)
 
 // get all pokemons or within a range
 app.get('/api/v1/pokemons', asyncWrapper(async (req, res) => {
@@ -340,3 +353,5 @@ app.get('*', asyncWrapper( async (req, res) => {
     //     res.json({ msg: 'Improper route. Check API docs plz.' })
     // }
 }))
+
+app.use(handleError)
