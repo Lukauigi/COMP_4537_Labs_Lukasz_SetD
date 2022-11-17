@@ -20,7 +20,7 @@ const dotenv = require("dotenv")
 dotenv.config();
 
 const app = express()
-const port = 5000
+const port = 6000
 const { Schema } = mongoose;
 const pokemonJsonUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/pokedex.json"
 const pokemonTypesJsonUrl = "https://raw.githubusercontent.com/fanzeyi/pokemon.json/master/types.json"
@@ -60,11 +60,12 @@ var pokemonTypes = [];
 
 const pokemonModel = mongoose.model('pokemon', initiatizePokemonSchema());
 
-app.listen(process.env.PORT || port, asyncWrapper(async (error) => {
+app.listen(process.env.POKEMONAPI_PORT, asyncWrapper(async (error) => {
     if (error) throw new PokemonDbError('');
     else {
+        console.log(`Pokemon API server is running on port: ${process.env.POKEMONAPI_PORT}`);
         await mongoose.connect(process.env.Mongo_Atlas_DB_String)
-        await mongoose.connection.db.dropDatabase() //drop previous collection records
+        await mongoose.connection.db.dropCollection('pokemons') //drop previous collection records
         await populateDatabase();
     }    
   }))
@@ -132,78 +133,36 @@ app.listen(process.env.PORT || port, asyncWrapper(async (error) => {
       })
   }
 
-app.use(express.json())
-
-/* ------------------------------------------ */
-/* ////// CRUD Operations of User Data \\\\\\ */
-/* ------------------------------------------ */
-
-const bcrypt = require('bcrypt')
-
-app.post('/register', asyncWrapper(async (req, res) => {
-    const { username, password, email } = req.body
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(password, salt)
-    const userWithHashedPassword = { ...req.body, password: hashedPassword }
-
-    const user = await pokeUserModel.create(userWithHashedPassword)
-    res.send(user)
-}))
-
-const jwt = require("jsonwebtoken")
-const { update } = require('./pokeUserModel')
-
-app.post('/login', asyncWrapper(async (req, res) => {
-  const { username, password } = req.body
-  const user = await pokeUserModel.findOne({ username })
-  if (!user) {
-    throw new PokemonBadRequest("User not found")
-  }
-  const isPasswordCorrect = await bcrypt.compare(password, user.password)
-  if (!isPasswordCorrect) {
-    throw new PokemonBadRequest("Password is incorrect")
-  }
-
-  // Create and assign a token
-  const token = jwt.sign({ _id: user._id }, `${process.env.TOKEN_SECRET}`)
-  console.log(token);
-  
-  res.header('auth-token', token)
-
-  //update user with token
-  const selection = { id: user.id }
-  const updateInfo = { $set: { token: token } }
-  const options = {
-      new: true,
-      runValidators: true,
-      overwrite: true
-  }
-  await pokeUserModel.findOneAndUpdate(selection, updateInfo, options)
-
-  res.send(user)
-}))
-
 /* ------------------------------------------ */
 /* ///// CRUD Operations of Pokemon Data \\\\ */
 /* ------------------------------------------ */
 
-const auth = async (req, res, next) => {
+const auth = asyncWrapper(async (req, res, next) => {
     //const token = req.header('auth-token')
 
-    const token = req.query.token    
+    const token = req.query.token
     if (!token) {
       throw new PokemonBadRequest("Access denied")
     }
     try {
       const record = await pokeUserModel.findOne({ token: token })
 
-      //const verified = jwt.verify(token, `${process.env.TOKEN_SECRET}`) // nothing happens if token is valid
-      const verified = jwt.verify(token, record.token)
+      //const verified = jwt.verify(token, process.env.TOKEN_SECRET) // nothing happens if token is valid
+    //   console.log('****************************************************');
+    //   console.log(token);
+    //   console.log('****************************************************');
+    //   console.log(record.token);
+    //   console.log('****************************************************');
+    //   console.log(`${process.env.TOKEN_SECRET}`);
+    //   console.log('****************************************************');
+    //   console.log(token===record.token);
+      //const verified = jwt.verify(token, record.token)
+      if (token===record.token && record.isLoggedIn)
       next()
     } catch (err) {
       throw new PokemonBadRequest("Invalid token")
     }
-}
+})
 
 app.use(auth)
 

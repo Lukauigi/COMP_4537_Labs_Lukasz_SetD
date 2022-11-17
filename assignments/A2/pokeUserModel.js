@@ -30,6 +30,11 @@ const schema = new mongoose.Schema({
   token: {
     type: String,
     unqiue: true
+  },
+  isLoggedIn: {
+    type: Boolean,
+    required: true,
+    default: false
   }
 })
 
