@@ -139,7 +139,7 @@ app.use(express.json())
 
 const bcrypt = require('bcrypt')
 
-app.post('/api/v1/register', asyncWrapper(async (req, res) => {
+app.post('/register', asyncWrapper(async (req, res) => {
     const { username, password, email } = req.body
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
@@ -148,6 +148,7 @@ app.post('/api/v1/register', asyncWrapper(async (req, res) => {
     const user = await pokeUserModel.create(userWithHashedPassword)
     res.send(user)
 }))
+  
 
 /* ------------------------------------------ */
 /* ///// CRUD Operations of Pokemon Data \\\\ */
