@@ -148,6 +148,19 @@ app.post('/register', asyncWrapper(async (req, res) => {
     const user = await pokeUserModel.create(userWithHashedPassword)
     res.send(user)
 }))
+
+app.post('/login', asyncWrapper(async (req, res) => {
+    const { username, password } = req.body
+    const user = await pokeUserModel.findOne({ username })
+    if (!user) {
+      throw new PokemonBadRequest("User not found")
+    }
+    const isPasswordCorrect = await bcrypt.compare(password, user.password)
+    if (!isPasswordCorrect) {
+      throw new PokemonBadRequest("Password is incorrect")
+    }
+    res.send(user)
+  }))
   
 
 /* ------------------------------------------ */
