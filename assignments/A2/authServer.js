@@ -39,14 +39,21 @@ app.post('/register', asyncWrapper(async (req, res) => {
     const { username, password, email } = req.body
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
-    const userWithHashedPassword = { ...req.body, password: hashedPassword }
+    
 
-    const user = await pokeUserModel.create(userWithHashedPassword)
-    res.send(user)
+    // Create and assign a token
+    const token = jwt.sign({ _id: username }, `${process.env.TOKEN_SECRET}`)
+    console.log(token);
+  
+    res.header('auth-token', token)
+
+    const pokeUser = { ...req.body, password: hashedPassword, token: token }
+
+    const user = await pokeUserModel.create(pokeUser)
+    res.send(pokeUser)
 }))
 
 const jwt = require("jsonwebtoken")
-//const { update } = require('./pokeUserModel')
 
 app.post('/login', asyncWrapper(async (req, res) => {
   const { username, password } = req.body
@@ -59,15 +66,9 @@ app.post('/login', asyncWrapper(async (req, res) => {
     throw new PokemonBadRequest("Password is incorrect")
   }
 
-  // Create and assign a token
-  const token = jwt.sign({ _id: user._id }, `${process.env.TOKEN_SECRET}`)
-  console.log(token);
-  
-  res.header('auth-token', token)
-
   //update user with token
   const selection = { username: user.username }
-  const updateInfo = { $set: { token: token, isLoggedIn: true } }
+  const updateInfo = { $set: { isLoggedIn: true } }
   const options = {
       new: true,
       runValidators: true,
