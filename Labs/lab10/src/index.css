@@ -22,3 +22,12 @@ code {
   width: 100px;
   height: 100px;
 }
+
+button {
+  display: inline-block;
+}
+
+button.active {
+  background-color: #1db443;
+  color: white;
+}
